@@ -1,0 +1,188 @@
+{
+  "fixtureVersion": "tokyo-rain-v1",
+  "recordedAt": "2026-08-28T09:00:00.000Z",
+  "currency": "JPY",
+  "notice": "Deterministic scenario data. This is not a live opening-hours verification.",
+  "candidates": [
+    {
+      "id": "dinner-soranoiro",
+      "name": "Soranoiro NIPPON",
+      "kind": "dinner",
+      "approximateLocation": "Tokyo Station area",
+      "estimatedCostYen": 2400,
+      "indoorSuitability": 1,
+      "vegetarianSuitability": 0.95,
+      "openingInfo": {
+        "scenarioOpen": true,
+        "hours": "10:30-22:00",
+        "recordedAt": "2026-08-28T09:00:00.000Z",
+        "sourceLabel": "Scenario venue listing"
+      },
+      "evidenceTimestamp": "2026-08-28T09:00:00.000Z",
+      "sourceConfidence": 0.94,
+      "novelty": 0.55,
+      "routeDistanceKm": 0.8,
+      "scenarioNote": "Vegetarian ramen option in an indoor station complex."
+    },
+    {
+      "id": "dinner-shojin",
+      "name": "Shojin Lantern Table",
+      "kind": "dinner",
+      "approximateLocation": "Ginza area",
+      "estimatedCostYen": 3600,
+      "indoorSuitability": 1,
+      "vegetarianSuitability": 1,
+      "openingInfo": {
+        "scenarioOpen": true,
+        "hours": "17:00-22:30",
+        "recordedAt": "2026-08-28T09:00:00.000Z",
+        "sourceLabel": "Scenario reservation listing"
+      },
+      "evidenceTimestamp": "2026-08-28T09:00:00.000Z",
+      "sourceConfidence": 0.8,
+      "novelty": 0.98,
+      "routeDistanceKm": 1.8,
+      "scenarioNote": "A fictionalized fixture representing a distinctive shojin meal."
+    },
+    {
+      "id": "dinner-garden",
+      "name": "Rain Garden Supper Club",
+      "kind": "dinner",
+      "approximateLocation": "Marunouchi area",
+      "estimatedCostYen": 3000,
+      "indoorSuitability": 1,
+      "vegetarianSuitability": 1,
+      "openingInfo": {
+        "scenarioOpen": true,
+        "hours": "17:30-23:00",
+        "recordedAt": "2026-08-28T09:00:00.000Z",
+        "sourceLabel": "Scenario venue listing"
+      },
+      "evidenceTimestamp": "2026-08-28T09:00:00.000Z",
+      "sourceConfidence": 0.85,
+      "novelty": 0.6,
+      "routeDistanceKm": 0.5,
+      "scenarioNote": "A compact-route fixture with a fully vegetarian menu."
+    },
+    {
+      "id": "activity-museum",
+      "name": "Intermediatheque Galleries",
+      "kind": "activity",
+      "approximateLocation": "Marunouchi area",
+      "estimatedCostYen": 0,
+      "indoorSuitability": 0.98,
+      "vegetarianSuitability": 1,
+      "openingInfo": {
+        "scenarioOpen": true,
+        "hours": "11:00-20:00",
+        "recordedAt": "2026-08-28T09:00:00.000Z",
+        "sourceLabel": "Scenario museum listing"
+      },
+      "evidenceTimestamp": "2026-08-28T09:00:00.000Z",
+      "sourceConfidence": 0.93,
+      "novelty": 0.45,
+      "routeDistanceKm": 0.6,
+      "scenarioNote": "Free indoor gallery fixture near the station."
+    },
+    {
+      "id": "activity-lantern",
+      "name": "Lantern Weather Gallery",
+      "kind": "activity",
+      "approximateLocation": "Azabudai area",
+      "estimatedCostYen": 3800,
+      "indoorSuitability": 1,
+      "vegetarianSuitability": 1,
+      "openingInfo": {
+        "scenarioOpen": true,
+        "hours": "10:00-21:00",
+        "recordedAt": "2026-08-28T09:00:00.000Z",
+        "sourceLabel": "Scenario ticket listing"
+      },
+      "evidenceTimestamp": "2026-08-28T09:00:00.000Z",
+      "sourceConfidence": 0.96,
+      "novelty": 0.84,
+      "routeDistanceKm": 3.1,
+      "scenarioNote": "A fictionalized fixture representing a premium immersive gallery."
+    },
+    {
+      "id": "activity-passage",
+      "name": "Underground Sound Passage",
+      "kind": "activity",
+      "approximateLocation": "Otemachi area",
+      "estimatedCostYen": 600,
+      "indoorSuitability": 0.95,
+      "vegetarianSuitability": 1,
+      "openingInfo": {
+        "scenarioOpen": true,
+        "hours": "18:00-22:00",
+        "recordedAt": "2026-08-28T09:00:00.000Z",
+        "sourceLabel": "Scenario event listing"
+      },
+      "evidenceTimestamp": "2026-08-28T09:00:00.000Z",
+      "sourceConfidence": 0.67,
+      "novelty": 0.98,
+      "routeDistanceKm": 0.9,
+      "scenarioNote": "A lower-confidence fixture admitted only by the Surprising threshold."
+    },
+    {
+      "id": "dessert-minimal",
+      "name": "Minimal The Baking",
+      "kind": "dessert",
+      "approximateLocation": "Yoyogi area",
+      "estimatedCostYen": 1800,
+      "indoorSuitability": 1,
+      "vegetarianSuitability": 1,
+      "openingInfo": {
+        "scenarioOpen": true,
+        "hours": "11:00-21:00",
+        "recordedAt": "2026-08-28T09:00:00.000Z",
+        "sourceLabel": "Scenario cafe listing"
+      },
+      "evidenceTimestamp": "2026-08-28T09:00:00.000Z",
+      "sourceConfidence": 0.91,
+      "novelty": 0.62,
+      "routeDistanceKm": 0.7,
+      "scenarioNote": "Indoor chocolate and pastry stop fixture."
+    },
+    {
+      "id": "dessert-wagashi",
+      "name": "Moonlit Wagashi Atelier",
+      "kind": "dessert",
+      "approximateLocation": "Nihonbashi area",
+      "estimatedCostYen": 2200,
+      "indoorSuitability": 1,
+      "vegetarianSuitability": 1,
+      "openingInfo": {
+        "scenarioOpen": true,
+        "hours": "12:00-21:30",
+        "recordedAt": "2026-08-28T09:00:00.000Z",
+        "sourceLabel": "Scenario workshop listing"
+      },
+      "evidenceTimestamp": "2026-08-28T09:00:00.000Z",
+      "sourceConfidence": 0.81,
+      "novelty": 1,
+      "routeDistanceKm": 2.2,
+      "scenarioNote": "A distinctive Japanese sweets workshop fixture."
+    },
+    {
+      "id": "dessert-hotel",
+      "name": "Station Hotel Tea Room",
+      "kind": "dessert",
+      "approximateLocation": "Tokyo Station area",
+      "estimatedCostYen": 2500,
+      "indoorSuitability": 1,
+      "vegetarianSuitability": 1,
+      "openingInfo": {
+        "scenarioOpen": true,
+        "hours": "10:00-22:00",
+        "recordedAt": "2026-08-28T09:00:00.000Z",
+        "sourceLabel": "Scenario hotel listing"
+      },
+      "evidenceTimestamp": "2026-08-28T09:00:00.000Z",
+      "sourceConfidence": 0.95,
+      "novelty": 0.45,
+      "routeDistanceKm": 0.4,
+      "scenarioNote": "High-confidence compact-route dessert fixture."
+    }
+  ]
+}
