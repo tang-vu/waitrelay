@@ -1,7 +1,7 @@
 import { LandingExperience } from "@/components/host/LandingExperience";
 import type { DemoScenario } from "@/components/host/run-types";
 
-const scenarios = new Set<DemoScenario>(["fast", "two-second", "standard", "long", "cancel", "error"]);
+const scenarios = new Set<DemoScenario>(["fast", "two-second", "standard", "late", "long", "cancel", "error"]);
 
 export default async function DemoPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const query = await searchParams;

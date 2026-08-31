@@ -24,6 +24,37 @@ export interface LandingExperienceProps {
 
 const stages = ["understanding", "gathering", "evaluating", "composing", "verifying"] as const;
 
+interface RelaySignalState {
+  requestId: string;
+  optionId: string;
+  signalId: string;
+  optionLabel: string;
+}
+
+function readableToken(value: string): string {
+  return value
+    .split(/[-_]/g)
+    .filter(Boolean)
+    .map((token) => `${token[0]?.toUpperCase() ?? ""}${token.slice(1)}`)
+    .join(" ");
+}
+
+function acknowledgementLabel(status: "appliedNow" | "tooLate" | "rejected" | "savedNext"): string {
+  if (status === "appliedNow") return "Applied now";
+  if (status === "tooLate") return "Too late";
+  if (status === "savedNext") return "Saved next";
+  return "Rejected";
+}
+
+function scrollIntoViewImmediately(element: HTMLElement | null): void {
+  if (!element) return;
+  const root = document.documentElement;
+  const previousBehavior = root.style.scrollBehavior;
+  root.style.scrollBehavior = "auto";
+  element.scrollIntoView({ block: "start", behavior: "auto" });
+  root.style.scrollBehavior = previousBehavior;
+}
+
 export function LandingExperience({ scenario = "standard", seed = "fork-flight-001", forceDemo = false, fault }: LandingExperienceProps) {
   const controller = useRunController({
     transportFault: fault === "sse-failure" ? "polling" : fault === "sse-reconnect" ? "reconnect" : undefined,
@@ -32,7 +63,10 @@ export function LandingExperience({ scenario = "standard", seed = "fork-flight-0
   const [mode, setMode] = useState<"active" | "passive">(fault === "passive" ? "passive" : "active");
   const [reducedMotion, setReducedMotion] = useState(fault === "reduced-motion");
   const [gameFailed, setGameFailed] = useState(false);
+  const [relaySignal, setRelaySignal] = useState<RelaySignalState | null>(null);
   const resultRef = useRef<HTMLElement>(null);
+  const runShellRef = useRef<HTMLElement>(null);
+  const autoScrolledRunRef = useRef<string | null>(null);
   const automatedProbeRef = useRef<string | null>(null);
   const nonce = useMemo(() => controller.runId ? `nonce-${controller.runId}` : "nonce-pending", [controller.runId]);
   const baseGate = useMemo(() => {
@@ -62,14 +96,34 @@ export function LandingExperience({ scenario = "standard", seed = "fork-flight-0
     });
   }, [baseGate, controller.latestAck, sensitive]);
 
+  const currentRelaySignal = relaySignal;
+  const relaySignalMatchesGate = Boolean(relaySignal && gate && relaySignal.requestId === gate.requestId);
+  const matchingRelayAck = currentRelaySignal && acknowledgement
+    && acknowledgement.requestId === currentRelaySignal.requestId
+    && acknowledgement.optionId === currentRelaySignal.optionId
+    && acknowledgement.signalId === currentRelaySignal.signalId
+    ? acknowledgement
+    : null;
+
+  useEffect(() => {
+    if (!controller.shouldShowActivity || !controller.runId || controller.activityDismissed) return;
+    if (autoScrolledRunRef.current === controller.runId) return;
+    autoScrolledRunRef.current = controller.runId;
+    const frame = requestAnimationFrame(() => {
+      scrollIntoViewImmediately(runShellRef.current);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [controller.activityDismissed, controller.runId, controller.shouldShowActivity]);
+
   useEffect(() => {
     if (controller.status !== "completed") return;
+    performance.mark("waitrelay-result-visible");
+    if (performance.getEntriesByName("waitrelay-run-complete-received", "mark").length > 0) {
+      performance.measure("waitrelay-completion-takeover", "waitrelay-run-complete-received", "waitrelay-result-visible");
+    }
     const frame = requestAnimationFrame(() => {
-      resultRef.current?.focus();
-      performance.mark("waitrelay-result-visible");
-      if (performance.getEntriesByName("waitrelay-run-complete-received", "mark").length > 0) {
-        performance.measure("waitrelay-completion-takeover", "waitrelay-run-complete-received", "waitrelay-result-visible");
-      }
+      resultRef.current?.focus({ preventScroll: true });
+      scrollIntoViewImmediately(resultRef.current);
     });
     return () => cancelAnimationFrame(frame);
   }, [controller.status]);
@@ -90,6 +144,8 @@ export function LandingExperience({ scenario = "standard", seed = "fork-flight-0
   const appliedChoices = controller.result
     ? (controller.result.impactReceipt as { entries?: unknown[] })?.entries?.length ?? 0
     : 0;
+  const experienceActive = controller.status !== "idle";
+  const experienceComplete = controller.status === "completed";
 
   return <main>
     <header className="site-header">
@@ -97,7 +153,7 @@ export function LandingExperience({ scenario = "standard", seed = "fork-flight-0
       <nav aria-label="Primary navigation"><Link href="/demo?scenario=standard&seed=fork-flight-001">Seeded demo</Link><Link href="/compare">Compare</Link><Link href="/fault-lab">Fault Lab</Link><a href="#privacy">Privacy</a></nav>
     </header>
 
-    <section className={`hero ${controller.status !== "idle" ? "hero-running" : ""}`}>
+    <section className={`hero ${experienceActive ? "hero-running" : ""} ${experienceComplete ? "hero-complete" : ""}`}>
       <div className="hero-copy">
         <div className="eyebrow">A decision relay for agent latency</div>
         <h1>The wait is the <span>second half</span> of your prompt.</h1>
@@ -107,13 +163,15 @@ export function LandingExperience({ scenario = "standard", seed = "fork-flight-0
       {controller.status === "idle" && <div className="bird-orbit" aria-hidden="true"><div className="orbit-line" /><div className="hero-bird"><span /></div><i className="star star-a" /><i className="star star-b" /><i className="star star-c" /></div>}
     </section>
 
-    <section className="workspace" aria-label="WaitRelay workspace">
+    <section className={`workspace ${experienceActive ? "workspace-compact" : ""} ${controller.status === "running" ? "workspace-running" : ""} ${experienceComplete ? "workspace-complete" : ""}`} aria-label="WaitRelay workspace">
       <div className="workspace-head">
         <div><span className="step-label">01 · TASK</span><h2>Plan something worth steering</h2></div>
         <ConnectionBadge connection={controller.connection} providerMode={controller.providerMode} />
       </div>
       <PromptComposer busy={controller.status === "running"} onSubmit={(prompt) => {
         setGameFailed(false);
+        setRelaySignal(null);
+        autoScrolledRunRef.current = null;
         void controller.start(prompt, { scenario, seed, sensitive, interactionMode: mode, forceDemo });
       }} />
       <div className="run-settings" aria-label="Run preferences">
@@ -123,7 +181,7 @@ export function LandingExperience({ scenario = "standard", seed = "fork-flight-0
       </div>
     </section>
 
-    {controller.status === "running" && <section className="run-shell" aria-label="Active agent run">
+    {controller.status === "running" && <section className="run-shell" aria-label="Active agent run" ref={runShellRef}>
       <div className="run-rail">
         <div><span className="step-label">02 · AGENT RUN</span><h2>{controller.stage ? `${controller.stage[0].toUpperCase()}${controller.stage.slice(1)}` : "Starting"}</h2></div>
         <ol className="stage-list" aria-label="Public lifecycle stages">{stages.map((item) => <li key={item} className={controller.stage === item ? "active" : ""}>{item}</li>)}</ol>
@@ -134,6 +192,26 @@ export function LandingExperience({ scenario = "standard", seed = "fork-flight-0
         <p className="semantics-note">Dismissing hides the flight. Cancelling stops the agent.</p>
         {controller.transportEvidence && <p className="transport-evidence" role="status">{controller.transportEvidence}</p>}
       </div>
+      {(gate || currentRelaySignal) && <section className="relay-strip" aria-label="Authoritative choice relay">
+        <div className="relay-strip-heading">
+          <span>Authoritative relay</span>
+          <small>Only a matching host ACK can claim impact.</small>
+        </div>
+        <ol>
+          <li className={gate ? "relay-step relay-step-complete" : "relay-step"}>
+            <span className="relay-step-index" aria-hidden="true">1</span>
+            <div><small>Choice request</small><strong>{gate ? `${readableToken(gate.axisId)} gate open` : "Gate closed"}</strong><p>{gate ? `Affects ${readableToken(gate.effectCategory).toLowerCase()}` : "Request received"}</p></div>
+          </li>
+          <li className={currentRelaySignal ? "relay-step relay-step-complete" : "relay-step"}>
+            <span className="relay-step-index" aria-hidden="true">2</span>
+            <div><small>{relaySignalMatchesGate ? "Choice signal" : currentRelaySignal ? "Latest signal" : "Choice signal"}</small><strong>{currentRelaySignal ? `${currentRelaySignal.optionLabel} relayed` : "Awaiting selection"}</strong><p>{matchingRelayAck ? "Host validation received" : currentRelaySignal ? "Pending host validation" : "The agent keeps working"}</p></div>
+          </li>
+          <li className={matchingRelayAck ? `relay-step relay-step-${matchingRelayAck.status}` : "relay-step"}>
+            <span className="relay-step-index" aria-hidden="true">3</span>
+            <div><small>Host ACK</small><strong role="status">{matchingRelayAck ? acknowledgementLabel(matchingRelayAck.status) : currentRelaySignal ? "Validation pending" : "No claim yet"}</strong><p>{matchingRelayAck?.status === "appliedNow" ? "Accepted before synthesis lock" : matchingRelayAck ? "Current result unchanged" : "Waiting for authoritative state"}</p></div>
+          </li>
+        </ol>
+      </section>}
       <div className="activity-stage">
         {controller.shouldShowActivity && controller.runId && controller.context && controller.visualSeed && !gameFailed ? <FlightSandboxHost
           src={fault === "iframe-failure" ? "/flight?crash=1" : reducedMotion ? "/flight?reduced=1" : "/flight"}
@@ -148,6 +226,14 @@ export function LandingExperience({ scenario = "standard", seed = "fork-flight-0
           sensitive={sensitive}
           onSignal={(selection) => {
             if (controller.activeChoice?.requestId === selection.requestId) {
+              const optionLabel = gate?.options.find((option) => option.optionId === selection.optionId)?.label
+                ?? readableToken(selection.optionId);
+              setRelaySignal({
+                requestId: selection.requestId,
+                optionId: selection.optionId,
+                signalId: selection.signalId,
+                optionLabel,
+              });
               const authoritativeOption = sensitive && baseGate
                 ? baseGate.options[selection.optionId === "practical" ? 0 : 1].optionId
                 : selection.optionId;
@@ -155,7 +241,10 @@ export function LandingExperience({ scenario = "standard", seed = "fork-flight-0
             }
           }}
           onSkip={(requestId) => {
-            if (controller.activeChoice?.requestId === requestId) controller.skip(controller.activeChoice);
+            if (controller.activeChoice?.requestId === requestId) {
+              if (relaySignal?.requestId === requestId) setRelaySignal(null);
+              controller.skip(controller.activeChoice);
+            }
           }}
           onDismiss={controller.dismissActivity}
           onModeChange={setMode}

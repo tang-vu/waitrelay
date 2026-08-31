@@ -3,6 +3,7 @@ import { z } from "zod";
 import { baselineTokyoPlan, buildTokyoPlan } from "../../../demo/tokyo-scenario";
 import { createAgentAdapter } from "../agents/hybrid-adapter";
 import type { AgentAdapter, AgentInput } from "../agents/agent-adapter";
+import { authoritativeTokyoAnswer } from "../agents/tokyo-itinerary";
 import { buildImpactReceipt } from "./impact-builder";
 import { resolveChoiceOption, TOKYO_CHOICE_DEFINITIONS, type ChoiceAxisId } from "../../shared/contracts/choices";
 import { createContextCapsule, type ContextCapsule } from "../../shared/contracts/context-capsule";
@@ -20,7 +21,7 @@ import type { RunSnapshot } from "../stores/run-store";
 
 export const StartRunInputSchema = z.object({
   prompt: z.string().trim().min(1).max(2_000),
-  scenario: z.enum(["fast", "two-second", "standard", "long", "cancel", "error"]).default("standard"),
+  scenario: z.enum(["fast", "two-second", "standard", "late", "long", "cancel", "error"]).default("standard"),
   seed: z.string().min(1).max(128).regex(/^[a-zA-Z0-9._:-]+$/).default("fork-flight-001"),
   sensitive: z.boolean().default(false),
   interactionMode: z.enum(["active", "passive"]).default("active"),
@@ -45,7 +46,8 @@ type ScenarioTiming = {
 const TIMINGS: Record<StartRunInput["scenario"], ScenarioTiming> = {
   fast: { firstGateMs: null, secondGateMs: null, lockMs: 120, completeMs: 200 },
   "two-second": { firstGateMs: 650, secondGateMs: null, lockMs: 1_900, completeMs: 2_200 },
-  standard: { firstGateMs: 1_350, secondGateMs: 3_800, lockMs: 7_000, completeMs: 8_200 },
+  standard: { firstGateMs: 1_350, secondGateMs: 5_000, lockMs: 7_500, completeMs: 8_700 },
+  late: { firstGateMs: 1_350, secondGateMs: null, lockMs: 4_500, completeMs: 8_500 },
   long: { firstGateMs: 2_000, secondGateMs: 8_000, lockMs: 25_000, completeMs: 30_000 },
   cancel: { firstGateMs: 1_200, secondGateMs: 4_000, lockMs: 25_000, completeMs: 30_000 },
   error: { firstGateMs: 1_100, secondGateMs: null, lockMs: 1_800, completeMs: 2_200 },
@@ -220,10 +222,9 @@ export class RunOrchestrator {
     await wait(Math.max(0, runtime.startedAt + targetMs - Date.now()), signal);
   }
 
-  private async liveGateDue(runtime: RuntimeRun, targetMs: number, evidencePromise: Promise<unknown>): Promise<boolean> {
-    const signal = this.store.getAbortSignal(runtime.runId);
+  private async liveGateDue(runId: string, delayMs: number, evidencePromise: Promise<unknown>): Promise<boolean> {
+    const signal = this.store.getAbortSignal(runId);
     if (!signal) throw new Error("Run signal unavailable");
-    const remaining = Math.max(0, runtime.startedAt + targetMs - Date.now());
     return new Promise<boolean>((resolve, reject) => {
       let settled = false;
       const finish = (result: boolean) => {
@@ -241,7 +242,7 @@ export class RunOrchestrator {
         reject(error);
       };
       const aborted = () => fail(new DOMException("The run was cancelled", "AbortError"));
-      const timer = setTimeout(() => finish(true), remaining);
+      const timer = setTimeout(() => finish(true), delayMs);
       signal.addEventListener("abort", aborted, { once: true });
       evidencePromise.then(() => finish(false), fail);
     });
@@ -276,9 +277,11 @@ export class RunOrchestrator {
       const applicableAxes = plan.applicableAxisIds.slice(0, 2);
 
       if (runtime.startedWithLive) {
-        const liveTargets = [250, 1_350];
+        // These delays are relative to post-analysis gathering, not run start.
+        // A slow provider can therefore never collapse both gates into one frame.
+        const liveDelays = [250, 2_000];
         for (const [index, axisId] of applicableAxes.entries()) {
-          if (!await this.liveGateDue(runtime, liveTargets[index], evidencePromise)) break;
+          if (!await this.liveGateDue(runId, liveDelays[index], evidencePromise)) break;
           await this.requestChoice(runId, axisId);
         }
       } else {
@@ -307,6 +310,9 @@ export class RunOrchestrator {
           : "Versioned scenario replay",
       }, signal);
       await this.publishProviderModeIfChanged(runtime);
+      const finalAnswer = runtime.adapter.mode === "live"
+        ? authoritativeTokyoAnswer(generated.answer, selected)
+        : generated.answer;
       await this.progress(runId, "verifying");
       await this.delayFrom(runtime, timing.completeMs);
       const snapshot = await this.store.getRun(runId);
@@ -332,7 +338,7 @@ export class RunOrchestrator {
         const event: PublicEvent = {
           ...this.base(runId, before.lastSequence + 1, now, "run.complete"),
           type: "run.complete",
-          finalAnswer: generated.answer,
+          finalAnswer,
           structuredResult: selected,
           impactReceipt: receipt,
           providerMode: runtime.adapter.mode,
@@ -376,7 +382,8 @@ export class RunOrchestrator {
         ...submitted,
       };
       const handled = await this.store.handleChoiceSignal(signal);
-      if (!handled.duplicate && before?.state === "active") {
+      const logChoice = handled.reason !== "run-capacity";
+      if (logChoice && !handled.duplicate && before?.state === "active") {
         const appendedSignal = await this.store.appendPublicEvent(signal);
         if (appendedSignal.status === "appended") this.listeners.get(runId)?.forEach((listener) => listener(signal));
       }
@@ -391,7 +398,7 @@ export class RunOrchestrator {
         status: handled.status,
         reason: handled.reason,
       };
-      if (!handled.duplicate && afterSignal?.state === "active") {
+      if (logChoice && !handled.duplicate && afterSignal?.state === "active") {
         const appendedAck = await this.store.appendPublicEvent(ack);
         if (appendedAck.status === "appended") this.listeners.get(runId)?.forEach((listener) => listener(ack));
       }

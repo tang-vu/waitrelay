@@ -80,6 +80,90 @@ function drawClouds(
   context.restore();
 }
 
+function drawConstellationMesh(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  state: FlightEngineState,
+): void {
+  context.save();
+  context.globalCompositeOperation = "screen";
+  context.lineWidth = 0.65;
+  for (let index = 0; index < state.stars.length - 7; index += 7) {
+    const first = state.stars[index];
+    const second = state.stars[index + 3];
+    const third = state.stars[index + 7];
+    const pulse = 0.035 + (Math.sin(state.elapsed * 0.28 + first.phase) + 1) * 0.018;
+    context.strokeStyle = `rgba(194, 222, 255, ${pulse})`;
+    context.beginPath();
+    context.moveTo(first.x * width, first.y * height);
+    context.lineTo(second.x * width, second.y * height);
+    context.lineTo(third.x * width, third.y * height);
+    context.stroke();
+  }
+  context.restore();
+}
+
+function drawDistantHorizon(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  state: FlightEngineState,
+  accent: string,
+): void {
+  const drift = (state.worldOffset * width * 0.22) % (width * 0.42);
+  context.save();
+  const haze = context.createLinearGradient(0, height * 0.63, 0, height);
+  haze.addColorStop(0, "rgba(4, 12, 29, 0)");
+  haze.addColorStop(0.58, `${accent}0d`);
+  haze.addColorStop(1, "rgba(3, 8, 19, 0.74)");
+  context.fillStyle = haze;
+  context.fillRect(0, height * 0.55, width, height * 0.45);
+
+  context.globalAlpha = 0.28;
+  context.fillStyle = "#050b18";
+  context.beginPath();
+  context.moveTo(-width * 0.1 - drift, height);
+  for (let index = -1; index < 8; index += 1) {
+    const x = index * width * 0.23 - drift;
+    const peak = height * (0.73 + (index % 3) * 0.045);
+    context.lineTo(x, height);
+    context.lineTo(x + width * 0.12, peak);
+    context.lineTo(x + width * 0.25, height);
+  }
+  context.closePath();
+  context.fill();
+  context.restore();
+}
+
+function drawVelocityStreaks(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  state: FlightEngineState,
+): void {
+  if (state.terminal) return;
+  context.save();
+  context.globalCompositeOperation = "screen";
+  context.lineCap = "round";
+  for (let index = 0; index < 10; index += 1) {
+    const phase = (index * 0.137 + state.worldOffset * (0.72 + index * 0.013)) % 1;
+    const x = width * (1.08 - phase * 1.18);
+    const y = height * (0.13 + ((index * 0.173) % 0.74));
+    const length = width * (0.018 + (index % 4) * 0.008);
+    const gradient = context.createLinearGradient(x - length, y, x, y);
+    gradient.addColorStop(0, "rgba(178, 239, 235, 0)");
+    gradient.addColorStop(1, `rgba(206, 248, 246, ${0.08 + (index % 3) * 0.025})`);
+    context.strokeStyle = gradient;
+    context.lineWidth = index % 3 === 0 ? 1.2 : 0.7;
+    context.beginPath();
+    context.moveTo(x - length, y);
+    context.lineTo(x, y);
+    context.stroke();
+  }
+  context.restore();
+}
+
 function drawCurrents(
   context: CanvasRenderingContext2D,
   width: number,
@@ -94,6 +178,23 @@ function drawCurrents(
   lanes.forEach((lane, index) => {
     const isSelected = selectedLane === (index === 0 ? "upper" : "lower");
     const laneColor = index === 0 ? "126, 213, 229" : "213, 167, 236";
+    context.save();
+    context.strokeStyle = `rgba(${laneColor}, ${isSelected ? (acknowledged ? 0.32 : 0.22) : 0.08})`;
+    context.lineWidth = isSelected ? height * 0.12 : height * 0.075;
+    context.filter = "blur(22px)";
+    context.beginPath();
+    context.moveTo(width * 0.08, height * lane);
+    context.bezierCurveTo(
+      width * 0.35,
+      height * (lane - 0.07),
+      width * 0.72,
+      height * (lane + 0.08),
+      width * 1.04,
+      height * lane,
+    );
+    context.stroke();
+    context.restore();
+
     context.strokeStyle = `rgba(${laneColor}, ${isSelected ? (acknowledged ? 0.9 : 0.65) : 0.25})`;
     context.lineWidth = isSelected ? 3.2 : 1.5;
     context.setLineDash(isSelected && !acknowledged ? [8, 10] : []);
@@ -138,6 +239,31 @@ function drawBird(
   context.shadowColor = "rgba(152, 239, 232, 0.78)";
   context.shadowBlur = 20 * scale;
 
+  context.save();
+  context.globalCompositeOperation = "screen";
+  for (let echo = 3; echo >= 1; echo -= 1) {
+    const trailX = -echo * 22 * scale;
+    const trailY = Math.sin(state.elapsed * 2.1 - echo * 0.55) * 2.5 * scale;
+    context.fillStyle = `rgba(135, 220, 224, ${0.035 + (4 - echo) * 0.025})`;
+    context.beginPath();
+    context.moveTo(trailX - 30 * scale, trailY + 2 * scale);
+    context.lineTo(trailX + 6 * scale, trailY - 10 * scale);
+    context.lineTo(trailX + 25 * scale, trailY - 1 * scale);
+    context.lineTo(trailX + 5 * scale, trailY + 7 * scale);
+    context.closePath();
+    context.fill();
+  }
+  const trail = context.createLinearGradient(-115 * scale, 0, -18 * scale, 0);
+  trail.addColorStop(0, "rgba(138, 232, 225, 0)");
+  trail.addColorStop(1, "rgba(188, 251, 241, 0.32)");
+  context.strokeStyle = trail;
+  context.lineWidth = 1.3 * scale;
+  context.beginPath();
+  context.moveTo(-112 * scale, 3 * scale);
+  context.quadraticCurveTo(-64 * scale, -4 * scale, -25 * scale, 3 * scale);
+  context.stroke();
+  context.restore();
+
   const bodyGradient = context.createLinearGradient(-28 * scale, -18 * scale, 34 * scale, 20 * scale);
   bodyGradient.addColorStop(0, "#f8ffff");
   bodyGradient.addColorStop(0.55, "#bcebea");
@@ -181,6 +307,12 @@ function drawBird(
   context.fillStyle = "#d9fff8";
   context.beginPath();
   context.arc(19 * scale, -4 * scale, 1.8 * scale, 0, Math.PI * 2);
+  context.fill();
+
+  context.globalCompositeOperation = "screen";
+  context.fillStyle = "rgba(215, 255, 247, 0.72)";
+  context.beginPath();
+  context.arc(-3 * scale, 2 * scale, 3.2 * scale, 0, Math.PI * 2);
   context.fill();
   context.restore();
 }
@@ -258,6 +390,7 @@ export function renderFlight(
   context.fillRect(0, 0, width, height);
 
   drawAurora(context, width, height, state, accent);
+  drawConstellationMesh(context, width, height, state);
 
   for (const star of state.stars) {
     const brightness = 0.24 + (Math.sin(state.elapsed * 0.7 + star.phase) + 1) * 0.2;
@@ -268,6 +401,8 @@ export function renderFlight(
   }
 
   drawClouds(context, width, height, state);
+  drawDistantHorizon(context, width, height, state, accent);
+  drawVelocityStreaks(context, width, height, state);
   if (options.gateVisible && !options.terminal) {
     drawCurrents(context, width, height, state, options.selectedLane, options.acknowledged);
   }

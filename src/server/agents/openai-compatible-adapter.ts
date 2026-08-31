@@ -123,7 +123,7 @@ export class OpenAICompatibleAdapter implements AgentAdapter {
 
   synthesize(input: SynthesisInput, signal: AbortSignal): Promise<AgentResult> {
     return this.requestJson(
-      "Return JSON only with an answer field. Present the supplied structured itinerary faithfully. Do not invent metrics, venues, opening hours, or causal effects.",
+      "Return JSON only with an answer field. Present the supplied structured itinerary faithfully. Include every selected venue name, the exact total cost, route distance, and scenario notice. Do not invent metrics, venues, opening hours, or causal effects.",
       input,
       AgentResultSchema,
       signal,

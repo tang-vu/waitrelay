@@ -21,7 +21,9 @@
     "test:privacy": "vitest run tests/privacy",
     "test:e2e": "playwright test",
     "test:a11y": "playwright test tests/e2e/accessibility.spec.ts",
-    "demo:preflight": "playwright test tests/e2e/demo-smoke.spec.ts --project=chromium --repeat-each=3"
+    "demo:preflight": "playwright test tests/e2e/demo-smoke.spec.ts --project=chromium --repeat-each=3",
+    "demo:capture": "node ops/capture-demo.mjs",
+    "host:preflight": "powershell -NoProfile -ExecutionPolicy Bypass -File ops/hosting-preflight.ps1"
   },
   "dependencies": {
     "next": "16.3.3",

@@ -8,6 +8,16 @@ WaitRelay turns unresolved agent decisions into short flight gates. A luminous c
 
 This repository contains a portable full-stack prototype for the Commons/VibeFi "Make Waiting for AI Fun" hackathon. The flagship demonstration plans a rain-safe vegetarian date in Tokyo under ¥12,000. During the run, the player can steer priorities such as Less Walking versus More Discovery and Reliable versus Surprising. The server validates each selection, acknowledges whether it was accepted before the synthesis lock, recalculates the structured plan, and builds an Impact Receipt from the before and after data.
 
+## Judge in 60 seconds
+
+Open the [public seeded demo](https://waitrelay.tangvu.dev/demo?scenario=standard&seed=fork-flight-001). It uses visibly labeled, recorded scenario evidence and requires no credentials.
+
+1. Start the prefilled task. Agent work begins immediately.
+2. Choose **Less Walking**. Notice Pending before the authoritative **Applied now** ACK.
+3. Choose **Surprising** if the second gate appears. The agent continues independently.
+4. Let completion replace the flight, then expand Impact Receipt and Privacy Inspector.
+5. Open the [computed comparison](https://waitrelay.tangvu.dev/compare) to see the same scenario produce traceably different plans.
+
 ## Why it is different
 
 Most waiting screens decorate latency. WaitRelay uses latency as a second input channel.
@@ -42,11 +52,19 @@ The Demo Provider uses local, versioned fixtures and seeded timing. Fixture open
 
 These captures are generated from the local production build and deterministic fixture path.
 
+![Active Fork Flight gate during the seeded agent run](demo/active-gate-final.png)
+
+| Signal is pending | Matching host ACK is applied |
+| --- | --- |
+| ![Less Walking relayed with validation pending](demo/pending-ack-final.png) | ![Authoritative Applied now ACK while the next gate opens](demo/applied-ack-final.png) |
+
 ![Completed Tokyo route and computed Impact Receipt](demo/result-receipt-final.png)
 
-![Fault Lab with interactive and test-backed evidence labels](demo/fault-lab-updated.png)
+![Expanded Privacy Inspector with actual allowlisted bridge payloads](demo/privacy-inspector-final.png)
 
 ![Computed split-screen comparison from the same structured scenario](demo/compare-final.png)
+
+![Fault Lab with interactive and test-backed evidence labels](demo/fault-lab-updated.png)
 
 For the flagship flow, submit:
 
@@ -106,9 +124,11 @@ pnpm test:privacy
 pnpm test:e2e
 pnpm test:a11y
 pnpm demo:preflight
+pnpm demo:capture
+pnpm host:preflight
 ```
 
-`demo:preflight` runs the deterministic judge path three times. Install the Playwright browser locally if requested by the toolchain:
+`demo:preflight` runs the deterministic judge path three times. `demo:capture` refreshes the checked-in proof images from the public build, or from `WAITRELAY_CAPTURE_BASE_URL` when set. Install the Playwright browser locally if requested by the toolchain:
 
 ```bash
 pnpm exec playwright install chromium

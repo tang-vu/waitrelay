@@ -259,7 +259,7 @@ export function useRunController(options: RunControllerOptions = {}): RunControl
       });
       if (!response.ok) throw new Error("choice relay failed");
     } catch {
-      setTransportEvidence("Choice was not confirmed. The flight closed and the run is continuing with defaults.");
+      setTransportEvidence("Choice confirmation was interrupted. The agent is continuing, and the final Impact Receipt is authoritative.");
       setActiveChoice(null);
       setActivityDismissed(true);
     }
@@ -275,7 +275,7 @@ export function useRunController(options: RunControllerOptions = {}): RunControl
       const response = await fetch(`/api/runs/${encodeURIComponent(runId)}/cancel`, { method: "POST" });
       if (!response.ok) throw new Error("cancel failed");
     } catch {
-      setTransportEvidence("Cancellation was not confirmed. The agent run remains active.");
+      setTransportEvidence("Cancellation confirmation was interrupted. The next authoritative run event determines the terminal state.");
     }
   }, [runId, status]);
 

@@ -17,6 +17,7 @@ import {
   ContextCapsuleSchema,
   type ContextCapsule,
 } from "../../shared/contracts/context-capsule";
+import { RunCapacityError } from "./run-store";
 import type {
   AcceptedChoiceState,
   AppendEventResult,
@@ -50,6 +51,9 @@ interface InternalRun {
 export interface MemoryRunStoreOptions {
   ttlMs?: number;
   cleanupIntervalMs?: number;
+  maxRuns?: number;
+  maxActiveRuns?: number;
+  maxEventsPerRun?: number;
   now?: () => number;
 }
 
@@ -82,11 +86,20 @@ function cloneChoiceResult(
 export class MemoryRunStore implements RunStore {
   private readonly runs = new Map<string, InternalRun>();
   private readonly ttlMs: number;
+  private readonly maxRuns: number;
+  private readonly maxActiveRuns: number;
+  private readonly maxEventsPerRun: number;
   private readonly now: () => number;
   private readonly cleanupTimer: ReturnType<typeof setInterval>;
 
   constructor(options: MemoryRunStoreOptions = {}) {
     this.ttlMs = options.ttlMs ?? 30 * 60 * 1_000;
+    this.maxRuns = options.maxRuns ?? 512;
+    this.maxActiveRuns = options.maxActiveRuns ?? 64;
+    this.maxEventsPerRun = options.maxEventsPerRun ?? 128;
+    if (this.maxRuns < 1 || this.maxActiveRuns < 1 || this.maxEventsPerRun < 16) {
+      throw new Error("MemoryRunStore capacity limits are invalid");
+    }
     this.now = options.now ?? Date.now;
     const intervalMs =
       options.cleanupIntervalMs ?? Math.min(this.ttlMs, 60_000);
@@ -107,6 +120,16 @@ export class MemoryRunStore implements RunStore {
     }
     if (!input.runId || input.runId.length > 128) {
       throw new Error("Invalid run ID");
+    }
+    const activeRuns = [...this.runs.values()].filter((run) => run.state === "active").length;
+    if (activeRuns >= this.maxActiveRuns) {
+      throw new RunCapacityError("Too many active runs");
+    }
+    while (this.runs.size >= this.maxRuns && this.evictOldestTerminal()) {
+      // Prefer bounded early cleanup over rejecting a new run.
+    }
+    if (this.runs.size >= this.maxRuns) {
+      throw new RunCapacityError("The retained run limit was reached");
     }
 
     const context = ContextCapsuleSchema.parse(input.context);
@@ -153,6 +176,9 @@ export class MemoryRunStore implements RunStore {
     }
     if (event.sequence <= run.lastSequence) {
       return { status: "stale", snapshot: this.toSnapshot(run) };
+    }
+    if (run.events.length >= this.maxEventsPerRun) {
+      return { status: "capacity", snapshot: this.toSnapshot(run) };
     }
 
     const nextTerminalState = eventTerminalState(event);
@@ -227,6 +253,21 @@ export class MemoryRunStore implements RunStore {
         reason: "conflicting-signal",
         acknowledgedAt,
         duplicate: true,
+      };
+    }
+
+    // Preserve one slot for the terminal event. Rejected overload signals are
+    // returned directly by the API and never mutate preferences or the log.
+    if (run.events.length + 2 > this.maxEventsPerRun - 1) {
+      return {
+        runId: signal.runId,
+        requestId: signal.requestId,
+        optionId: signal.optionId,
+        signalId: signal.signalId,
+        status: "rejected",
+        reason: "run-capacity",
+        acknowledgedAt,
+        duplicate: false,
       };
     }
 
@@ -363,6 +404,17 @@ export class MemoryRunStore implements RunStore {
       removed += 1;
     }
     return removed;
+  }
+
+  private evictOldestTerminal(): boolean {
+    const candidate = [...this.runs.values()]
+      .filter((run) => run.state !== "active")
+      .sort((left, right) => left.updatedAt.localeCompare(right.updatedAt))[0];
+    if (!candidate) return false;
+    if (!candidate.abortController.signal.aborted) {
+      candidate.abortController.abort("capacity-evicted");
+    }
+    return this.runs.delete(candidate.runId);
   }
 
   dispose(): void {

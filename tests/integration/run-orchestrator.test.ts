@@ -38,7 +38,7 @@ describe("RunOrchestrator", () => {
       signalledAt: new Date().toISOString(),
     });
     expect(ack.status).toBe("appliedNow");
-    await vi.advanceTimersByTimeAsync(7_000);
+    await vi.advanceTimersByTimeAsync(8_000);
     const complete = (await orchestrator.getEvents(created.runId)).find((event) => event.type === "run.complete");
     expect(complete?.type).toBe("run.complete");
     if (!complete || complete.type !== "run.complete") throw new Error("run incomplete");
@@ -55,8 +55,8 @@ describe("RunOrchestrator", () => {
   });
 
   it("returns tooLate after the synthesis snapshot", async () => {
-    const created = await orchestrator.start(input);
-    await vi.advanceTimersByTimeAsync(7_100);
+    const created = await orchestrator.start({ ...input, scenario: "late" as const });
+    await vi.advanceTimersByTimeAsync(4_600);
     const request = (await orchestrator.getEvents(created.runId)).find((event) => event.type === "choice.request");
     if (!request || request.type !== "choice.request") throw new Error("gate unavailable");
     const ack = await orchestrator.handleChoice(created.runId, {
@@ -164,7 +164,7 @@ describe("RunOrchestrator", () => {
           signalledAt: "2026-08-30T12:00:01.400Z",
         });
       }
-      await vi.advanceTimersByTimeAsync(7_000);
+      await vi.advanceTimersByTimeAsync(8_000);
       const firstEvents = await orchestrator.getEvents(firstRun.runId);
       const secondEvents = await second.getEvents(secondRun.runId);
       const normalizeTimeline = (events: typeof firstEvents) => events.map((event) => {

@@ -33,7 +33,7 @@ export type AgentResult = z.infer<typeof AgentResultSchema>;
 
 export interface AgentInput {
   prompt: string;
-  scenario: "fast" | "two-second" | "standard" | "long" | "cancel" | "error";
+  scenario: "fast" | "two-second" | "standard" | "late" | "long" | "cancel" | "error";
   seed: string;
 }
 

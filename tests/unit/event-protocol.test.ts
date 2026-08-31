@@ -7,6 +7,8 @@ import {
   PublicEventSchema,
   parsePublicEvent,
 } from "@/shared/contracts/events";
+import { buildImpactReceipt } from "@/server/orchestrator/impact-builder";
+import { baselineTokyoPlan } from "../../demo/tokyo-scenario";
 
 const base = {
   protocolVersion: PROTOCOL_VERSION,
@@ -108,5 +110,32 @@ describe("versioned public event protocol", () => {
       PublicEventSchema.safeParse({ ...acknowledgement, status: "probably-applied" })
         .success,
     ).toBe(false);
+  });
+
+  it("strictly validates completion plans, receipts, and cross-run identity", () => {
+    const structuredResult = baselineTokyoPlan();
+    const impactReceipt = buildImpactReceipt({
+      runId: base.runId,
+      baseline: structuredResult,
+      selected: structuredResult,
+      acceptedChoices: [],
+      generatedAt: base.timestamp,
+    });
+    const completion = {
+      ...base,
+      type: "run.complete",
+      finalAnswer: "Authoritative itinerary",
+      structuredResult,
+      impactReceipt,
+      providerMode: "demo",
+    };
+
+    expect(PublicEventSchema.safeParse(completion).success).toBe(true);
+    expect(PublicEventSchema.safeParse({ ...completion, structuredResult: {} }).success).toBe(false);
+    expect(PublicEventSchema.safeParse({
+      ...completion,
+      impactReceipt: { ...impactReceipt, runId: "different-run" },
+    }).success).toBe(false);
+    expect(PublicEventSchema.safeParse({ ...completion, finalAnswer: "x".repeat(16_001) }).success).toBe(false);
   });
 });

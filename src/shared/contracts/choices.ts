@@ -11,6 +11,14 @@ export const ChoiceOptionIdSchema = z.enum([
 ]);
 export type ChoiceOptionId = z.infer<typeof ChoiceOptionIdSchema>;
 
+export const ChoiceAckStatusSchema = z.enum([
+  "appliedNow",
+  "tooLate",
+  "rejected",
+  "savedNext",
+]);
+export type ChoiceAckStatus = z.infer<typeof ChoiceAckStatusSchema>;
+
 export const PreferenceStateSchema = z
   .object({
     mobility: z.enum(["less-walking", "more-discovery"]),

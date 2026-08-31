@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { ChoiceAckStatusSchema } from "./events";
+import { ChoiceAckStatusSchema } from "./choices";
 
 export const ReceiptScalarSchema = z.union([
   z.string(),
@@ -34,7 +34,7 @@ export const ImpactReceiptEntrySchema = z
     pipelineNode: z.string().min(1).max(80),
     beforeState: z.record(z.string(), ReceiptScalarSchema),
     afterState: z.record(z.string(), ReceiptScalarSchema),
-    effectMetrics: z.array(EffectMetricSchema),
+    effectMetrics: z.array(EffectMetricSchema).max(12),
     summary: z.string().min(1).max(500),
   })
   .strict()
@@ -54,9 +54,9 @@ export const ImpactReceiptSchema = z
     protocolVersion: z.literal("1.0"),
     runId: z.string().min(1).max(128),
     generatedAt: z.string().datetime(),
-    baselinePlanId: z.string().min(1).max(128),
-    selectedPlanId: z.string().min(1).max(128),
-    entries: z.array(ImpactReceiptEntrySchema),
+    baselinePlanId: z.string().min(1).max(256),
+    selectedPlanId: z.string().min(1).max(256),
+    entries: z.array(ImpactReceiptEntrySchema).max(3),
     materialChange: z.boolean(),
     summary: z.string().min(1).max(500),
   })

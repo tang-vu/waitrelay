@@ -10,6 +10,8 @@ import {
   sanitizeProviderError,
 } from "@/security/sanitize";
 import { PROTOCOL_VERSION } from "@/shared/contracts/events";
+import { buildImpactReceipt } from "@/server/orchestrator/impact-builder";
+import { baselineTokyoPlan } from "../../demo/tokyo-scenario";
 
 const CANARY = "RAW_PROMPT_CANARY_8f79c58d7e";
 const base = {
@@ -22,12 +24,25 @@ const base = {
 
 describe("host to flight sanitizer", () => {
   it("removes the complete result, answer, and receipt from completion", () => {
+    const plan = baselineTokyoPlan();
+    const impactReceipt = buildImpactReceipt({
+      runId: base.runId,
+      baseline: plan,
+      selected: plan,
+      acceptedChoices: [],
+      generatedAt: base.timestamp,
+    });
     const output = sanitizeFlightEvent({
       ...base,
       type: "run.complete",
       finalAnswer: `Private answer ${CANARY}`,
-      structuredResult: { prompt: CANARY },
-      impactReceipt: { privateEvidence: CANARY },
+      structuredResult: {
+        ...plan,
+        stops: plan.stops.map((stop, index) => index === 0
+          ? { ...stop, scenarioNote: CANARY }
+          : stop),
+      },
+      impactReceipt: { ...impactReceipt, summary: CANARY },
       providerMode: "demo",
     });
 

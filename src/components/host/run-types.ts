@@ -21,6 +21,7 @@ export type DemoScenario =
   | "fast"
   | "two-second"
   | "standard"
+  | "late"
   | "long"
   | "cancel"
   | "error";

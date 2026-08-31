@@ -1,11 +1,11 @@
 import type { ContextCapsule } from "../../shared/contracts/context-capsule";
 import type {
-  ChoiceAckStatus,
   ChoiceRequest,
   ChoiceSignal,
   PublicEvent,
 } from "../../shared/contracts/events";
 import type {
+  ChoiceAckStatus,
   ChoiceAxisId,
   ChoiceOptionId,
   PreferenceState,
@@ -45,7 +45,8 @@ export interface ChoiceHandlingResult {
     | "unknown-request"
     | "conflicting-signal"
     | "terminal-run"
-    | "stale-run";
+    | "stale-run"
+    | "run-capacity";
   acknowledgedAt: string;
   duplicate: boolean;
   preferenceState?: PreferenceState;
@@ -66,7 +67,7 @@ export interface RunSnapshot {
 }
 
 export interface AppendEventResult {
-  status: "appended" | "duplicate" | "stale" | "terminal" | "stale-run";
+  status: "appended" | "duplicate" | "stale" | "terminal" | "stale-run" | "capacity";
   snapshot?: RunSnapshot;
 }
 
@@ -92,3 +93,12 @@ export interface RunStore {
 }
 
 export type StoredChoiceRequest = ChoiceRequest;
+
+export class RunCapacityError extends Error {
+  readonly code = "run-capacity";
+
+  constructor(message = "The run service is at capacity") {
+    super(message);
+    this.name = "RunCapacityError";
+  }
+}

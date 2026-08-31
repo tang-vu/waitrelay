@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 import { ContextCapsuleSchema } from "./context-capsule";
+import { ChoiceAckStatusSchema } from "./choices";
+import { ImpactReceiptSchema } from "./receipts";
+import { TokyoPlanSchema } from "./tokyo-plan";
 
 export const PROTOCOL_VERSION = "1.0" as const;
 
@@ -26,12 +29,7 @@ export const ProviderModeSchema = z.enum([
 ]);
 export type ProviderMode = z.infer<typeof ProviderModeSchema>;
 
-export const ChoiceAckStatusSchema = z.enum([
-  "appliedNow",
-  "tooLate",
-  "rejected",
-  "savedNext",
-]);
+export { ChoiceAckStatusSchema } from "./choices";
 export type ChoiceAckStatus = z.infer<typeof ChoiceAckStatusSchema>;
 
 export const ChoiceOptionSchema = z
@@ -123,17 +121,33 @@ export const ChoiceAckEventSchema = EventBaseSchema.extend({
       "terminal-run",
       "stale-run",
       "memory-disabled",
+      "run-capacity",
     ])
     .optional(),
 }).strict();
 
 export const RunCompleteEventSchema = EventBaseSchema.extend({
   type: z.literal("run.complete"),
-  finalAnswer: z.string(),
-  structuredResult: z.unknown(),
-  impactReceipt: z.unknown(),
+  finalAnswer: z.string().min(1).max(16_000),
+  structuredResult: TokyoPlanSchema,
+  impactReceipt: ImpactReceiptSchema,
   providerMode: ProviderModeSchema,
-}).strict();
+}).strict().superRefine((event, context) => {
+  if (event.impactReceipt.runId !== event.runId) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Impact Receipt run ID must match its completion event",
+      path: ["impactReceipt", "runId"],
+    });
+  }
+  if (event.impactReceipt.selectedPlanId !== event.structuredResult.planId) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Impact Receipt selected plan must match the structured result",
+      path: ["impactReceipt", "selectedPlanId"],
+    });
+  }
+});
 
 export const RunCancelRequestEventSchema = EventBaseSchema.extend({
   type: z.literal("run.cancel.request"),

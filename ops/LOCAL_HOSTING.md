@@ -45,4 +45,15 @@ pnpm exec playwright test tests/e2e/demo-smoke.spec.ts --project=chromium
 Remove-Item Env:PLAYWRIGHT_BASE_URL,Env:PLAYWRIGHT_SKIP_WEBSERVER
 ```
 
-The public endpoint depends on this Windows machine, PM2 resurrection after login, local network availability, and the Cloudflare Tunnel connector.
+After each production restart and immediately before a judge session, run the
+single-command operational gate:
+
+```powershell
+pnpm host:preflight
+```
+
+It verifies all three PM2 processes, local and public health, host and iframe
+security headers, the HTML `no-transform` policy, and the absence of an injected
+analytics beacon. It does not print or read the tunnel credential.
+
+The public endpoint depends on this Windows machine, PM2 resurrection after login, local network availability, and the Cloudflare Tunnel connector. AC sleep is disabled on the current host, while battery sleep remains enabled. Recheck that policy before an unattended judging window.

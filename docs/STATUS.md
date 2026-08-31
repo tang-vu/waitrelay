@@ -7,7 +7,7 @@ Last updated: 2026-08-31
 - End-to-end Tokyo vertical: submit, start, flight, gate request, option signal, authoritative ACK, trusted preference patch, synthesis lock, structured reranking, completion takeover, result, and computed Impact Receipt.
 - Two causal axes: Less Walking or More Discovery, and Reliable or Surprising.
 - Versioned runtime event schemas, identity-safe idempotent choice handling, append-only public log, atomic snapshot, monotonic terminal transitions, cancellation, gap-free SSE replay subscription, and sequence-safe polling fallback.
-- Deterministic fast, two-second, standard, long, cancel, and error scenarios with visible provider labels.
+- Deterministic fast, two-second, standard, late-choice, long, cancel, and error scenarios with visible provider labels.
 - Native Canvas flight, pointer, touch, keyboard, button controls, Passive Mode, Reduced Motion Mode, skip, dismiss, and separate cancellation.
 - Opaque-origin flight iframe with `sandbox="allow-scripts"`, restrictive CSP, run nonce, transferred MessageChannel, strict schemas, and exact-payload Privacy Inspector.
 - Sensitive Mode with generic context, generic gates, fixed private visual seed, sharing disabled, and no sensitive storage.
@@ -15,16 +15,22 @@ Last updated: 2026-08-31
 - Optional OpenAI-compatible adapter with server-only configuration, bounded timeout, one retry, abort propagation, structured validation, and sanitized errors.
 - Disabled and sandbox-preview payment adapters. No real checkout or transaction path is enabled.
 - Judge-facing Fault Lab, computed split-screen comparison, sanitized Flight Card, deterministic seed echo, persisted generic card identity, non-transactional Flight Pack preview, real screenshots, and the full submission document set.
+- Judge-facing evidence links, a 60-second evaluator path, and a causal-first 90-second recording script with explicit recorded-scenario language.
+- Host-side causal relay strip that makes choice request, pending signal, and matching authoritative ACK legible without trusting the game frame.
+- Compact running layout, immediate activity and result framing, richer native Canvas depth, and a computed three-step proof path in Impact Receipt.
+- Strict completion payloads, host-owned live-output consistency fallback, spaced live gates, bounded public request/run capacity, and distinct host and flight security policies.
+- One-command hosting preflight for PM2, origin, tunnel, CSP, HSTS, no-transform, and analytics-injection checks.
 
 ## Current work
 
-The competition build is release-gated and published at `https://waitrelay.tangvu.dev` from a single local production process through a named Cloudflare Tunnel. PM2 manages the Next.js server, final origin proxy, and tunnel connector. No video recording, purchase, repository publication, or hackathon submission has been performed.
+The repository contents are tracked. The competition build is release-gated and published at `https://waitrelay.tangvu.dev` from a single local production process through a named Cloudflare Tunnel. PM2 manages the Next.js server, final origin proxy, and tunnel connector. No video recording, purchase, repository publication, or hackathon submission has been performed.
 
 ## Next work
 
 1. Record the 80 to 90 second demo using the checked-in script and seeded URL.
-2. Replace repository and video placeholders only with real URLs.
-3. Submit before the September 17 operational deadline after explicit authorization.
+2. Refresh final captures if the visible UI changes before recording.
+3. Replace repository and video placeholders only with real URLs.
+4. Submit before the September 17 operational deadline after explicit authorization.
 
 ## Risks and honest limitations
 
@@ -77,20 +83,20 @@ The competition build is release-gated and published at `https://waitrelay.tangv
 
 ## Verification evidence
 
-The results below are from the final settled-tree gate on 2026-08-31:
+The results below are from the integrated competition-polish gate on 2026-08-31:
 
 - `pnpm install --frozen-lockfile`: passed, lockfile already current.
 - `pnpm lint`: passed with zero warnings.
 - `pnpm typecheck`: passed with zero TypeScript errors.
-- `pnpm test:unit`: 11 files, 47 tests passed.
-- `pnpm test:integration`: 3 files, 20 tests passed.
+- `pnpm test:unit`: 11 files, 51 tests passed.
+- `pnpm test:integration`: 4 files, 24 tests passed.
 - `pnpm test:race`: 1 file, 5 tests passed, exercising 300 controlled interleavings plus duplicate-signal replay.
 - `pnpm test:privacy`: 3 files, 18 tests passed.
 - `pnpm build`: passed using Next.js 16.3.3 production build.
-- `pnpm test:e2e`: 36 browser tests passed across desktop and mobile projects, including a measured completion-to-result assertion below 250 ms.
+- `pnpm test:e2e`: 39 browser tests passed across desktop and mobile projects, including a measured completion-to-result assertion below 250 ms.
 - `pnpm test:a11y`: 8 accessibility tests passed at 1440 by 900 and 390 by 844, including host, iframe, reduced-motion, comparison, and high-contrast coverage with no serious or critical axe findings.
 - `pnpm demo:preflight`: 3 consecutive production smoke runs passed.
-- `pnpm test`: 18 Vitest files, 90 tests passed across unit, integration, race, and privacy suites.
+- `pnpm test`: 19 Vitest files, 98 tests passed across unit, integration, race, and privacy suites.
 - Browser assertions reported no console errors or page errors on the judge path.
 - The privacy canary was absent from the iframe DOM, bridge inspector, URL, localStorage, sessionStorage, IndexedDB names, and sanitized share surface.
 - The production client artifact scan found no `AGENT_API_KEY`, server secret marker, or raw-prompt canary.
@@ -101,7 +107,9 @@ The results below are from the final settled-tree gate on 2026-08-31:
 - No skipped critical tests were found.
 - The public Cloudflare path returned health 200, preserved the flight CSP, and completed three consecutive seeded browser smoke runs with no console errors.
 - The public privacy canary test passed through the tunnel, origin proxy, SSE transport, and sandboxed flight boundary.
+- The dedicated public late-choice proof showed an authoritative tooLate ACK before completion, and the public causal-strip proof preserved the matching ACK while the next gate opened.
+- `pnpm host:preflight` passed all PM2, local/public health, CSP, HSTS, no-transform, and analytics-injection checks.
 - Four public desktop accessibility checks passed, including active flight, reduced motion, comparison, and high contrast, with no serious or critical axe findings.
 - Cloudflare analytics injection is prevented with a final `Cache-Control: no-transform` HTML policy; the host and flight HTML contain no injected beacon.
 
-Visual inspection covered the empty state, mobile composer, active Canvas gate, pending and applied ACK states, two-choice result takeover, computed Impact Receipt, Privacy Inspector, Reduced Motion Mode, Fault Lab, provider failure, Flight Pack preview, computed comparison, and desktop and mobile layouts. Real local captures are stored in `demo/`.
+Visual inspection covered the empty state, mobile composer, active Canvas gate, pending and applied ACK states, two-choice result takeover, expanded technical Impact Receipt, actual Privacy Inspector payloads, Reduced Motion Mode, late choice, fast completion, Fault Lab, provider failure, Flight Pack preview, computed comparison, and desktop and mobile layouts. Fresh captures from the public build are stored in `demo/` and can be regenerated with `pnpm demo:capture`.

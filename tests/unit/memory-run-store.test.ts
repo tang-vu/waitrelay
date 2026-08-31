@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { MemoryRunStore } from "@/server/stores/memory-run-store";
+import { RunCapacityError } from "@/server/stores/run-store";
+import { buildImpactReceipt } from "@/server/orchestrator/impact-builder";
 import { PROTOCOL_VERSION, type ChoiceRequest, type ChoiceSignal } from "@/shared/contracts/events";
+import { baselineTokyoPlan } from "../../demo/tokyo-scenario";
 
 const stores: MemoryRunStore[] = [];
 
@@ -238,6 +241,14 @@ describe("MemoryRunStore invariants", () => {
     const store = makeStore();
     await store.createRun({ runId: "run-terminal-event", context });
     await store.appendPublicEvent(request("run-terminal-event", 0));
+    const structuredResult = baselineTokyoPlan();
+    const impactReceipt = buildImpactReceipt({
+      runId: "run-terminal-event",
+      baseline: structuredResult,
+      selected: structuredResult,
+      acceptedChoices: [],
+      generatedAt: "2026-08-30T12:00:01.000Z",
+    });
     expect(
       (
         await store.appendPublicEvent({
@@ -248,8 +259,8 @@ describe("MemoryRunStore invariants", () => {
           timestamp: "2026-08-30T12:00:01.000Z",
           type: "run.complete",
           finalAnswer: "The answer",
-          structuredResult: {},
-          impactReceipt: {},
+          structuredResult,
+          impactReceipt,
           providerMode: "demo",
         })
       ).status,
@@ -312,5 +323,77 @@ describe("MemoryRunStore invariants", () => {
     expect(store.cleanupExpired()).toBe(1);
     expect(abortSignal?.aborted).toBe(true);
     expect(await store.getRun("run-expiring-terminal")).toBeUndefined();
+  });
+
+  it("bounds active runs while preserving existing work", async () => {
+    const store = new MemoryRunStore({
+      maxRuns: 2,
+      maxActiveRuns: 1,
+      cleanupIntervalMs: 60_000,
+    });
+    stores.push(store);
+    await store.createRun({ runId: "run-capacity-active", context });
+
+    await expect(store.createRun({ runId: "run-capacity-rejected", context }))
+      .rejects.toBeInstanceOf(RunCapacityError);
+    expect(await store.getRun("run-capacity-active")).toBeDefined();
+  });
+
+  it("evicts the oldest terminal run before rejecting new work", async () => {
+    const store = new MemoryRunStore({
+      maxRuns: 1,
+      maxActiveRuns: 1,
+      cleanupIntervalMs: 60_000,
+    });
+    stores.push(store);
+    await store.createRun({ runId: "run-capacity-old", context });
+    await store.transitionTerminal("run-capacity-old", "completed");
+    await expect(store.createRun({ runId: "run-capacity-new", context })).resolves.toBeDefined();
+    expect(await store.getRun("run-capacity-old")).toBeUndefined();
+  });
+
+  it("reserves event capacity for a terminal event", async () => {
+    const store = new MemoryRunStore({ maxEventsPerRun: 16, cleanupIntervalMs: 60_000 });
+    stores.push(store);
+    const runId = "run-event-capacity";
+    await store.createRun({ runId, context });
+    await store.appendPublicEvent(request(runId, 0));
+    for (let sequence = 1; sequence <= 13; sequence += 1) {
+      await store.appendPublicEvent({
+        protocolVersion: PROTOCOL_VERSION,
+        runId,
+        eventId: `${runId}-progress-${sequence}`,
+        sequence,
+        timestamp: `2026-08-30T12:00:${String(sequence).padStart(2, "0")}.000Z`,
+        type: "run.progress",
+        stage: "gathering",
+      });
+    }
+
+    await expect(store.handleChoiceSignal(signal(runId, "less-walking", "capacity-signal")))
+      .resolves.toMatchObject({ status: "rejected", reason: "run-capacity" });
+    expect((await store.getRun(runId))?.publicEvents).toHaveLength(14);
+
+    const structuredResult = baselineTokyoPlan();
+    const impactReceipt = buildImpactReceipt({
+      runId,
+      baseline: structuredResult,
+      selected: structuredResult,
+      acceptedChoices: [],
+      generatedAt: "2026-08-30T12:00:14.000Z",
+    });
+    await store.transitionTerminal(runId, "completed");
+    await expect(store.appendPublicEvent({
+      protocolVersion: PROTOCOL_VERSION,
+      runId,
+      eventId: `${runId}-complete`,
+      sequence: 14,
+      timestamp: "2026-08-30T12:00:14.000Z",
+      type: "run.complete",
+      finalAnswer: "The bounded run completed.",
+      structuredResult,
+      impactReceipt,
+      providerMode: "demo",
+    })).resolves.toMatchObject({ status: "appended" });
   });
 });

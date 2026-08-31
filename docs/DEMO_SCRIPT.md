@@ -8,19 +8,24 @@ Keep the Fault Lab ready in a second tab:
 
 `https://waitrelay.tangvu.dev/fault-lab`
 
+Keep the computed comparison ready in a third tab:
+
+`https://waitrelay.tangvu.dev/compare`
+
 ## Voiceover and actions
 
 | Time | Exact voiceover | Exact on-screen action |
 | --- | --- | --- |
 | 0 to 8 | "AI waiting screens waste attention. WaitRelay turns that latency into a second input channel." | Start on the title and prompt composer. Hold briefly on the tagline. |
-| 8 to 18 | "I will ask for a rain-safe vegetarian date in Tokyo tonight, under twelve thousand yen, using recorded scenario evidence for opening hours." | Submit the prefilled flagship task. Keep the Demo Provider label and scenario-data notice visible. The agent starts before Fork Flight mounts. |
+| 8 to 18 | "I will ask for a rain-safe vegetarian date in Tokyo tonight, under twelve thousand yen, using recorded scenario opening evidence." | Submit the prefilled flagship task. Keep the Demo Provider label and scenario-data notice visible. The agent starts before Fork Flight mounts. |
 | 18 to 34 | "The agent keeps gathering with sensible defaults. It offers one unresolved decision: less walking or more discovery. I fly Less Walking back to the host." | Guide the bird into Less Walking. Pause on Pending. When the authoritative ACK arrives, point to Applied now. |
-| 34 to 48 | "Now I can ask for something more surprising. The game sends only an allowlisted option ID. The agent never pauses for me." | Select Surprising if the seeded sequence exposes it. Briefly show public lifecycle ambience and the continuing run. |
-| 48 to 60 | "The answer is ready, so completion wins. I do not finish a level or wait for the portal." | Let `run.complete` replace the activity immediately. Keep the decorative portal visible behind the answer if present. |
-| 60 to 72 | "The receipt proves what changed. Walking weight increased, route distance changed, and venue substitutions came from the structured ranking, not an invented explanation." | Expand Impact Receipt. Show before and after weights, computed distance, substitutions, and ACK timestamps. Do not read any metric not visible in the current seeded output. |
-| 72 to 79 | "A fast answer never flashes a full-screen game." | Switch to the 200 ms Fault Lab case and run it. Show the direct answer takeover. |
-| 79 to 85 | "And the game never receives the raw prompt. This inspector shows the exact sanitized events that crossed the sandbox." | Switch back to the completed standard-run tab. Open Privacy Inspector and point to the enum-only Context Capsule, gate identifiers, stage, and ACK. |
-| 85 to 90 | "A sanitized Flight Card makes the wait memorable, and Flight Packs preview optional cosmetics after completion. The wait is the second half of your prompt." | In the standard-run tab, show the Flight Card and non-transactional Flight Pack preview, then finish on the wordmark. |
+| 34 to 46 | "Now I can ask for something more surprising. The game sends only an allowlisted option ID, and the agent never pauses for me." | Select Surprising. Briefly show the continuing public lifecycle and its ACK. |
+| 46 to 56 | "The answer is ready, so completion wins. I do not finish a level or wait for the portal." | Let `run.complete` replace the active flight immediately. Keep any portal motion decorative behind the answer. |
+| 56 to 69 | "The receipt proves what changed. Its weights, route difference, substitutions, and timestamps come from the structured ranking, not an invented explanation." | Expand Impact Receipt. Show only before and after values visible in the current seeded output. |
+| 69 to 77 | "The game never receives the raw prompt. This inspector shows the exact sanitized events that crossed the sandbox." | Expand Privacy Inspector in the completed run. Point to the enum-only Context Capsule, gate identifiers, public stage, and ACK. |
+| 77 to 84 | "The same scenario can finish differently. This comparison computes both plans from their accepted choices." | Switch to the prepared comparison tab. Point to the different routes and the structured reasons beneath them. |
+| 84 to 88 | "And a fast answer never flashes a full-screen game." | Switch to the prepared 200 ms Fault Lab probe and run it. Show the direct answer takeover. |
+| 88 to 90 | "Flight Packs stay an optional post-run preview. The wait is the second half of your prompt." | Cut to a prepared two-second capture of the non-transactional preview and wordmark. |
 
 ## Shot list
 
@@ -32,10 +37,11 @@ Keep the Fault Lab ready in a second tab:
 6. Second decision while work continues
 7. Completion takeover during activity
 8. Compact receipt, then technical receipt details
-9. Fast scenario without full-screen mount
-10. Actual Privacy Inspector payloads
-11. Sanitized Flight Card and disabled or demo-labeled Flight Pack preview
-12. Final title and tagline
+9. Actual Privacy Inspector payloads
+10. Computed split-screen comparison
+11. Fast scenario without full-screen mount
+12. Optional Flight Pack preview for no more than two seconds
+13. Final title and tagline
 
 Record a separate mobile 390 by 844 pass for submission cutaways. Show touch selection, 44 pixel targets, and the receipt layout. Do not splice a different seed into a causal before and after sequence.
 
@@ -55,6 +61,7 @@ If the iframe renderer fails, dismiss activity and continue the run. Use the Fau
 ## Seeded routes
 
 - Standard: `/demo?scenario=standard&seed=fork-flight-001`
+- Late ACK proof: `/demo?scenario=late&seed=late-001`
 - Fast: `/demo?scenario=fast&seed=fork-flight-001`
 - Long: `/demo?scenario=long&seed=fork-flight-001`
 - Cancel: `/demo?scenario=cancel&seed=fork-flight-001`
@@ -86,6 +93,7 @@ Only routes implemented by the final build should be shared publicly. Keep the s
 ## Rehearsal checklist
 
 - Rehearse the exact pointer path for both gates.
+- Pre-open and pre-scroll the standard demo, comparison, and Fault Lab tabs.
 - Keep each voiceover segment within its assigned time.
 - Pause long enough for Pending and Applied now to be legible.
 - Use only metrics shown by the current deterministic seed.
@@ -93,7 +101,7 @@ Only routes implemented by the final build should be shared publicly. Keep the s
 - Avoid claiming a Commons integration that is not implemented.
 - Avoid implying that public lifecycle stages reveal private reasoning.
 - Keep Dismiss activity and Cancel AI run verbally distinct.
-- Prepare the Fault Lab tab before recording.
+- Keep the Flight Pack preview to two seconds or remove it before shortening any causal proof.
 - Record one clean desktop take and one mobile cutaway take.
 
 Do not publish, upload, or submit the recording without explicit authorization.

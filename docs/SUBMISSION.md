@@ -14,7 +14,7 @@ WaitRelay turns unresolved agent decisions into short flight gates, so optional 
 
 ## 50-word description
 
-WaitRelay turns AI waiting time into a second input channel. Fly a luminous courier through useful decision gates while the agent keeps working. Server-acknowledged choices alter a structured result, completion always wins, and an Impact Receipt proves exactly what changed without exposing prompts or private reasoning to the game today.
+WaitRelay turns AI waiting time into a second input channel. Fly a luminous courier through useful decision gates while the agent keeps working. Server-acknowledged choices alter a structured result, completion always wins, and an Impact Receipt proves exactly what changed without exposing prompts or private reasoning to the flight itself.
 
 ## 150-word description
 

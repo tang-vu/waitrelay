@@ -4,39 +4,25 @@ import fixtureJson from "../fixtures/tokyo-evidence.json";
 import {
   DEFAULT_PREFERENCES,
   PreferenceStateSchema,
-  RankingWeightsSchema,
   deriveRankingWeights,
   type PreferenceState,
 } from "../src/shared/contracts/choices";
+import {
+  TokyoCandidateSchema,
+  TokyoPlanSchema,
+  type TokyoCandidate,
+  type TokyoPlan,
+} from "../src/shared/contracts/tokyo-plan";
+
+export {
+  TokyoCandidateSchema,
+  TokyoPlanSchema,
+  type TokyoCandidate,
+  type TokyoPlan,
+} from "../src/shared/contracts/tokyo-plan";
 
 export const FLAGSHIP_TASK =
   "Plan a rain-safe surprise date in Tokyo tonight under ¥12,000. We are vegetarian. Verify that every place is open.";
-
-export const TokyoCandidateSchema = z
-  .object({
-    id: z.string().min(1),
-    name: z.string().min(1),
-    kind: z.enum(["dinner", "activity", "dessert"]),
-    approximateLocation: z.string().min(1),
-    estimatedCostYen: z.number().int().nonnegative(),
-    indoorSuitability: z.number().min(0).max(1),
-    vegetarianSuitability: z.number().min(0).max(1),
-    openingInfo: z
-      .object({
-        scenarioOpen: z.boolean(),
-        hours: z.string().min(1),
-        recordedAt: z.string().datetime(),
-        sourceLabel: z.string().min(1),
-      })
-      .strict(),
-    evidenceTimestamp: z.string().datetime(),
-    sourceConfidence: z.number().min(0).max(1),
-    novelty: z.number().min(0).max(1),
-    routeDistanceKm: z.number().nonnegative(),
-    scenarioNote: z.string().min(1),
-  })
-  .strict();
-export type TokyoCandidate = z.infer<typeof TokyoCandidateSchema>;
 
 const TokyoFixtureSchema = z
   .object({
@@ -47,25 +33,6 @@ const TokyoFixtureSchema = z
     candidates: z.array(TokyoCandidateSchema).min(3),
   })
   .strict();
-
-export const TokyoPlanSchema = z
-  .object({
-    planId: z.string().min(1),
-    fixtureVersion: z.string().min(1),
-    fixtureRecordedAt: z.string().datetime(),
-    scenarioNotice: z.string().min(1),
-    preferences: PreferenceStateSchema,
-    rankingWeights: RankingWeightsSchema,
-    stops: z.array(TokyoCandidateSchema).length(3),
-    totalCostYen: z.number().int().nonnegative(),
-    routeDistanceKm: z.number().nonnegative(),
-    averageNovelty: z.number().min(0).max(1),
-    averageSourceConfidence: z.number().min(0).max(1),
-    verifiedEvidenceItems: z.number().int().nonnegative(),
-    excludedCandidateIds: z.array(z.string()),
-  })
-  .strict();
-export type TokyoPlan = z.infer<typeof TokyoPlanSchema>;
 
 const fixture = TokyoFixtureSchema.parse(fixtureJson);
 

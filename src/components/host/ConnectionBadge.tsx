@@ -16,10 +16,19 @@ export function ConnectionBadge({ connection, providerMode }: { connection: stri
       });
     return () => controller.abort();
   }, []);
-  const preflightLabel = preflight === "checking" ? "Live preflight: checking" : preflight === "ready" ? "Live preflight: ready" : preflight === "not-configured" ? "Live preflight: not configured" : "Live preflight: unavailable";
-  return <div className="status-badges" aria-label={`Provider: ${label}. Connection: ${connection}. ${preflightLabel}.`}>
+  const connectionLabel = connection === "live"
+    ? "Stream connected"
+    : connection === "polling"
+      ? "Polling fallback"
+      : connection === "connecting"
+        ? "Stream connecting"
+        : connection === "offline"
+          ? "Stream offline"
+          : "Stream idle";
+  const preflightLabel = preflight === "checking" ? "Live adapter check" : preflight === "ready" ? "Live adapter ready" : preflight === "not-configured" ? "Live adapter off" : "Live adapter unavailable";
+  return <div className="status-badges" aria-label={`Provider: ${label}. Transport: ${connectionLabel}. ${preflightLabel}.`}>
     <span className={`badge provider-${providerMode ?? "demo"}`}>{label}</span>
-    <span className="badge"><span className={`status-dot status-${connection}`} aria-hidden="true" />{connection}</span>
+    <span className="badge"><span className={`status-dot status-${connection}`} aria-hidden="true" />{connectionLabel}</span>
     <span className={`badge preflight-${preflight}`}>{preflightLabel}</span>
   </div>;
 }

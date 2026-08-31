@@ -139,11 +139,15 @@ test.describe("Fork Flight causal loop", () => {
   });
 
   test("a post-lock choice is labelled too late and never enters the receipt", async ({ page }) => {
-    await page.goto("/demo?scenario=standard&seed=late-001&fault=auto-late-choice");
+    await page.goto("/demo?scenario=late&seed=late-001");
     await page.getByRole("button", { name: "Start the relay" }).click();
     const frame = page.frameLocator('iframe[title="WaitRelay Fork Flight"]');
-    await expect(frame.getByText("Too late for this run")).toBeVisible({ timeout: 8_000 });
-    await expect(page.getByRole("heading", { name: "Your route is ready" })).toBeVisible({ timeout: 3_000 });
+    const lateChoice = frame.getByRole("button", { name: /Less Walking/ });
+    await expect(lateChoice).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole("heading", { name: "Verifying" })).toBeVisible({ timeout: 7_000 });
+    await lateChoice.click();
+    await expect(frame.getByText("Too late for this run")).toBeVisible({ timeout: 2_000 });
+    await expect(page.getByRole("heading", { name: "Your route is ready" })).toBeVisible({ timeout: 5_000 });
     await expect(page.getByText("Defaults carried the run.")).toBeVisible();
   });
 
@@ -158,7 +162,7 @@ test.describe("Fork Flight causal loop", () => {
     await page.route("**/api/runs/*/events", async (route) => route.abort("connectionfailed"));
     await page.goto("/demo?scenario=two-second&seed=polling-001");
     await page.getByRole("button", { name: "Start the relay" }).click();
-    await expect(page.getByText("polling", { exact: true })).toBeVisible({ timeout: 3_000 });
+    await expect(page.getByText("Polling fallback", { exact: true })).toBeVisible({ timeout: 3_000 });
     await expect(page.getByRole("heading", { name: "Your route is ready" })).toBeVisible({ timeout: 5_000 });
   });
 
@@ -208,10 +212,28 @@ test.describe("Fork Flight causal loop", () => {
     // expected fetch failure intentionally tears down the iframe immediately,
     // which can detach the button before Playwright's click bookkeeping ends.
     await flight.getByRole("button", { name: /Less Walking/ }).dispatchEvent("click");
-    await expect(page.getByText("Choice was not confirmed.", { exact: false })).toBeVisible();
+    await expect(page.getByText("Choice confirmation was interrupted.", { exact: false })).toBeVisible();
     await expect(page.getByText("Activity dismissed")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Your route is ready" })).toBeVisible({ timeout: 9_000 });
     await expect(page.getByText("Defaults carried the run.")).toBeVisible();
+  });
+
+  test("a committed choice with a lost response defers to the authoritative receipt", async ({ page }) => {
+    await page.route("**/api/runs/*/choices", async (route) => {
+      await route.fetch();
+      await route.abort("connectionfailed");
+    });
+    await page.goto("/demo?scenario=standard&seed=ambiguous-choice-001");
+    await page.getByRole("button", { name: "Start the relay" }).click();
+    const flight = page.frameLocator('iframe[title="WaitRelay Fork Flight"]');
+    const choice = flight.getByRole("button", { name: /Less Walking/ });
+    await expect(choice).toBeVisible({ timeout: 4_000 });
+    await choice.dispatchEvent("click");
+    await expect(page.getByText("final Impact Receipt is authoritative", { exact: false })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Your route is ready" })).toBeVisible({ timeout: 9_000 });
+    await expect(page.getByRole("heading", { name: "Impact Receipt" })).toBeVisible();
+    await expect(page.getByText("Less Walking", { exact: true })).toBeVisible();
+    await expect(page.getByText("Defaults carried the run.")).toHaveCount(0);
   });
 
   test("failed cancellation stays unconfirmed while the agent completes", async ({ page }) => {
@@ -219,7 +241,7 @@ test.describe("Fork Flight causal loop", () => {
     await page.goto("/demo?scenario=two-second&seed=cancel-network-001");
     await page.getByRole("button", { name: "Start the relay" }).click();
     await page.getByRole("button", { name: "Cancel AI run" }).click();
-    await expect(page.getByText("Cancellation was not confirmed.", { exact: false })).toBeVisible();
+    await expect(page.getByText("Cancellation confirmation was interrupted.", { exact: false })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Your route is ready" })).toBeVisible({ timeout: 4_000 });
     await expect(page.getByRole("heading", { name: "The flight and agent stopped." })).toHaveCount(0);
   });
@@ -229,7 +251,7 @@ test.describe("Fork Flight causal loop", () => {
     await page.getByRole("button", { name: "Start the relay" }).click();
     await expect(page.locator('iframe[title="WaitRelay Fork Flight"]')).toBeVisible({ timeout: 2_500 });
     await context.setOffline(true);
-    await expect(page.getByText("offline", { exact: true })).toBeVisible();
+    await expect(page.getByText("Stream offline", { exact: true })).toBeVisible();
     await page.waitForTimeout(2_400);
     await context.setOffline(false);
     await expect(page.getByRole("heading", { name: "Your route is ready" })).toBeVisible({ timeout: 5_000 });

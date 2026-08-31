@@ -126,6 +126,61 @@ describe("live non-blocking orchestration", () => {
     expect(events.at(-1)?.type).toBe("run.complete");
   });
 
+  it("spaces live gates from the end of slow analysis", async () => {
+    const analysis = deferred<AgentPlan>();
+    const evidence = deferred<EvidenceBundle>();
+    const adapter: AgentAdapter = {
+      mode: "live",
+      health: async () => ({ ok: true, mode: "live", label: "Live Provider" }),
+      analyze: async () => analysis.promise,
+      gather: async () => evidence.promise,
+      synthesize: async () => ({ answer: "Unused" }),
+    };
+    const orchestrator = new RunOrchestrator({ adapterFactory: () => adapter });
+    orchestrators.push(orchestrator);
+    const created = await orchestrator.start(input);
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect((await orchestrator.getEvents(created.runId)).filter((event) => event.type === "choice.request")).toHaveLength(0);
+
+    analysis.resolve({
+      domain: "planning",
+      taskKind: "plan",
+      applicableAxisIds: ["mobility", "character"],
+      publicSummary: "Delayed live analysis",
+    });
+    await vi.advanceTimersByTimeAsync(249);
+    expect((await orchestrator.getEvents(created.runId)).filter((event) => event.type === "choice.request")).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(1);
+    expect((await orchestrator.getEvents(created.runId)).filter((event) => event.type === "choice.request")).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1_999);
+    expect((await orchestrator.getEvents(created.runId)).filter((event) => event.type === "choice.request")).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect((await orchestrator.getEvents(created.runId)).filter((event) => event.type === "choice.request")).toHaveLength(2);
+    await orchestrator.cancel(created.runId);
+  });
+
+  it("replaces contradictory live prose with the host-owned itinerary", async () => {
+    const orchestrator = new RunOrchestrator({
+      adapterFactory: () => liveAdapter(Promise.resolve({
+        source: "live",
+        recordedAt: new Date().toISOString(),
+        summary: "Immediate evidence",
+        evidenceItems: 3,
+      }), []),
+    });
+    orchestrators.push(orchestrator);
+    const created = await orchestrator.start(input);
+    await vi.advanceTimersByTimeAsync(0);
+    const complete = (await orchestrator.getEvents(created.runId)).find((event) => event.type === "run.complete");
+    if (!complete || complete.type !== "run.complete") throw new Error("run incomplete");
+
+    expect(complete.finalAnswer).not.toContain("Live adapter answer");
+    expect(complete.finalAnswer).toContain(complete.structuredResult.scenarioNotice);
+    for (const stop of complete.structuredResult.stops) {
+      expect(complete.finalAnswer).toContain(stop.name);
+    }
+  });
+
   it("uses only the axes returned by live analysis and rejects a post-lock signal", async () => {
     const evidence = deferred<EvidenceBundle>();
     const orchestrator = new RunOrchestrator({
