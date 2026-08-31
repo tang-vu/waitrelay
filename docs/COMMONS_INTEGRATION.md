@@ -52,4 +52,4 @@ Before enabling `PAYMENTS_MODE=commons`, the project requires official documenta
 
 The user-provided official rules list September 17, 2026 as the closing date, while an authenticated dashboard has displayed September 18. The project treats September 17 as the operational deadline unless Commons publishes an exact timestamp and timezone, with stable readiness targeted at least 24 hours earlier.
 
-No repository, deployment, video, partner, or submission URL is fabricated in this documentation.
+The documented public deployment URL was verified against the running Cloudflare Tunnel. No repository, video, partner, or submission URL is fabricated.

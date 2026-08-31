@@ -136,4 +136,6 @@ The impact builder compares the same baseline and selected plan schemas. Current
 
 ## Deployment notes
 
+The public judge build runs as one production Next.js process on the local Windows host. A small local streaming proxy adds the final `Cache-Control: no-transform` HTML policy, then a named Cloudflare Tunnel publishes `waitrelay.tangvu.dev`. PM2 manages all three processes and the machine's existing PM2 resurrection task restores them after login.
+
 The application does not assume a Commons waiting-layer SDK or private Commons endpoint. Integration points are the adapter interfaces and versioned protocol. Production multi-instance operation would require a durable event log, distributed atomic operations, and shared cancellation state.

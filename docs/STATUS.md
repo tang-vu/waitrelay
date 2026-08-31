@@ -18,14 +18,13 @@ Last updated: 2026-08-31
 
 ## Current work
 
-The local competition build is release-gated and verified. No deployment, publication, video recording, purchase, or submission has been performed because those actions require explicit authorization and real destination URLs.
+The competition build is release-gated and published at `https://waitrelay.tangvu.dev` from a single local production process through a named Cloudflare Tunnel. PM2 manages the Next.js server, final origin proxy, and tunnel connector. No video recording, purchase, repository publication, or hackathon submission has been performed.
 
 ## Next work
 
 1. Record the 80 to 90 second demo using the checked-in script and seeded URL.
-2. Deploy the production build to a single-instance host and rerun the same preflight against the public URL.
-3. Replace repository, deployment, and video placeholders only with real URLs.
-4. Submit before the September 17 operational deadline after explicit authorization.
+2. Replace repository and video placeholders only with real URLs.
+3. Submit before the September 17 operational deadline after explicit authorization.
 
 ## Risks and honest limitations
 
@@ -33,6 +32,7 @@ The local competition build is release-gated and verified. No deployment, public
 | --- | --- |
 | No verified public Commons runtime or payment contract | No Commons adapter is implemented or claimed. The portable adapter boundary remains available. |
 | Process-local store | Suitable for a single-instance demo only. Multi-instance deployment needs a durable atomic store. |
+| Local-machine availability | The public build depends on this Windows machine, PM2 resurrection, network connectivity, and the Cloudflare connector. |
 | Demo availability evidence is not current verification | Every fixture result displays its version, recorded timestamp, and scenario-data notice. |
 | Live adapter does not normalize provider venue records into the ranker | Live mode can perform validated analysis and presentation over the versioned Tokyo plan, but is not described as live venue verification. |
 | Fault Lab protocol cards are not all runtime fault injectors | Each card says either Interactive or Test-backed. Automated evidence covers the protocol-only cases. |
@@ -99,5 +99,9 @@ The results below are from the final settled-tree gate on 2026-08-31:
 - A local OpenAI-compatible browser probe kept Live Provider visibly labeled on success and changed the UI to Fallback Replay after a controlled live-provider failure.
 - A temporary offline browser did not stop server-side completion.
 - No skipped critical tests were found.
+- The public Cloudflare path returned health 200, preserved the flight CSP, and completed three consecutive seeded browser smoke runs with no console errors.
+- The public privacy canary test passed through the tunnel, origin proxy, SSE transport, and sandboxed flight boundary.
+- Four public desktop accessibility checks passed, including active flight, reduced motion, comparison, and high contrast, with no serious or critical axe findings.
+- Cloudflare analytics injection is prevented with a final `Cache-Control: no-transform` HTML policy; the host and flight HTML contain no injected beacon.
 
 Visual inspection covered the empty state, mobile composer, active Canvas gate, pending and applied ACK states, two-choice result takeover, computed Impact Receipt, Privacy Inspector, Reduced Motion Mode, Fault Lab, provider failure, Flight Pack preview, computed comparison, and desktop and mobile layouts. Real local captures are stored in `demo/`.

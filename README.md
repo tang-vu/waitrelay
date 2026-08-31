@@ -23,6 +23,8 @@ Most waiting screens decorate latency. WaitRelay uses latency as a second input 
 
 Requirements: Node.js 20 or newer and pnpm.
 
+Public judge build: `https://waitrelay.tangvu.dev/demo?scenario=standard&seed=fork-flight-001`
+
 ```bash
 pnpm install
 pnpm dev
@@ -137,8 +139,8 @@ The experience supports touch, mouse, arrow keys, WASD, and visible button alter
 
 ## Hackathon evidence
 
-The [Judging Matrix](docs/JUDGING_MATRIX.md) maps concrete product and test evidence to Waiting Experience, Originality, Fit, Repeatability, and Execution. The [Demo Script](docs/DEMO_SCRIPT.md) contains the 90-second recording path, seeded fallback, and preflight checklist. The [Submission](docs/SUBMISSION.md) file contains ready-to-use copy with explicit URL placeholders.
+The [Judging Matrix](docs/JUDGING_MATRIX.md) maps concrete product and test evidence to Waiting Experience, Originality, Fit, Repeatability, and Execution. The [Demo Script](docs/DEMO_SCRIPT.md) contains the 90-second recording path, seeded fallback, and preflight checklist. The [Submission](docs/SUBMISSION.md) file contains ready-to-use copy with placeholders only for repository and video URLs.
 
 ## Safety
 
-No real payment, deployment, publication, or hackathon submission is performed by this repository. Payment failure cannot affect an agent run, and the judged product is complete with payments disabled.
+The public judge build is served from one local production process through a named Cloudflare Tunnel. No real payment, video publication, or hackathon submission has been performed. Payment failure cannot affect an agent run, and the judged product is complete with payments disabled.

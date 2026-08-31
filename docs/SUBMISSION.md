@@ -90,8 +90,8 @@ The complete steering experience remains free. The post-run "Forge a Flight Pack
 
 ## Demo instructions
 
-1. Start the app locally with `pnpm dev`.
-2. Open `/demo?scenario=standard&seed=fork-flight-001`.
+1. Open `https://waitrelay.tangvu.dev/demo?scenario=standard&seed=fork-flight-001`.
+2. Confirm the Demo Provider badge and recorded scenario-data notice.
 3. Submit the prefilled Tokyo task.
 4. Select Less Walking and observe Pending before Applied now.
 5. Select Surprising if presented.
@@ -122,8 +122,8 @@ See `docs/DEMO_SCRIPT.md` for exact voiceover and preflight steps.
 ## Links
 
 - Repository: `[REPOSITORY_URL]`
-- Public deployment: `[PUBLIC_DEPLOYMENT_URL]`
+- Public deployment: `https://waitrelay.tangvu.dev`
 - Demo video: `[VIDEO_URL]`
 - Hackathon page: `https://commonsmade.com/hackathons`
 
-Replace placeholders only with verified public URLs. Do not fabricate links.
+Replace the remaining placeholders only with verified public URLs. Do not fabricate links.

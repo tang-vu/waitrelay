@@ -2,11 +2,11 @@
 
 ## Primary seeded URL
 
-`http://localhost:4317/demo?scenario=standard&seed=fork-flight-001`
+`https://waitrelay.tangvu.dev/demo?scenario=standard&seed=fork-flight-001`
 
 Keep the Fault Lab ready in a second tab:
 
-`http://localhost:4317/fault-lab`
+`https://waitrelay.tangvu.dev/fault-lab`
 
 ## Voiceover and actions
 

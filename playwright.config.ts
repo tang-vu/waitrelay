@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const externalBaseUrl = process.env.PLAYWRIGHT_BASE_URL;
+const skipWebServer = process.env.PLAYWRIGHT_SKIP_WEBSERVER === "1";
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: false,
@@ -7,11 +10,11 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
-    baseURL: "http://127.0.0.1:3187",
+    baseURL: externalBaseUrl ?? "http://127.0.0.1:3187",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  webServer: [
+  webServer: skipWebServer ? undefined : [
     {
       command: "node tests/e2e/support/openai-provider.mjs",
       url: "http://127.0.0.1:3188/models",

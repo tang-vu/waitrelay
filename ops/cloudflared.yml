@@ -1,0 +1,7 @@
+tunnel: 611e430e-9ee2-412e-8301-022be075d9f9
+credentials-file: C:\Users\tangm\.cloudflared\waitrelay-v2.json
+
+ingress:
+  - hostname: waitrelay.tangvu.dev
+    service: http://127.0.0.1:4317
+  - service: http_status:404
