@@ -2,8 +2,20 @@ import { expect, test } from "@playwright/test";
 
 test("long-wait scenery repeats beyond a minute, supports Quiet Mode, and yields to the answer", async ({ page }, testInfo) => {
   test.setTimeout(45_000);
-  // Advance browser time only. The real server keeps its independent 30s run.
-  await page.clock.install();
+  // Control only the decorative frame clock. Host timers, networking, and the
+  // real server keep running independently, including the 30-second completion.
+  await page.addInitScript(() => {
+    if (window === window.top) return;
+    const raf = window.requestAnimationFrame.bind(window);
+    const now = performance.now.bind(performance);
+    const clock: { time?: number; last: number } = { last: 0 };
+    Object.defineProperty(window, "__flightTestClock", { value: clock });
+    Object.defineProperty(performance, "now", { value: () => clock.time ?? now() });
+    window.requestAnimationFrame = (callback) => raf((time) => {
+      clock.last = clock.time ?? time;
+      callback(clock.last);
+    });
+  });
   await page.goto("/demo?scenario=long&seed=long-wait-modules");
   await page.getByRole("button", { name: "Start the relay" }).click();
   const flight = page.frameLocator('iframe[title="WaitRelay Fork Flight"]');
@@ -11,15 +23,22 @@ test("long-wait scenery repeats beyond a minute, supports Quiet Mode, and yields
   await expect(canvas).toHaveAttribute("data-flight-scenery", "aurora-drift");
   await flight.getByRole("button", { name: /Less Walking/ }).press("Enter");
   await expect(flight.getByText("Applied now")).toBeVisible();
+  const frame = page.frames().find((candidate) => new URL(candidate.url()).pathname === "/flight");
+  if (!frame) throw new Error("Flight frame unavailable");
+  const advance = async (milliseconds: number) => frame.evaluate((delta) => {
+    const clock = (window as typeof window & { __flightTestClock: { time?: number; last: number } }).__flightTestClock;
+    clock.time = (clock.time ?? clock.last) + delta;
+  }, milliseconds);
+  await advance(0);
   await page.screenshot({ path: testInfo.outputPath("aurora.png") });
-  await page.clock.fastForward(10_000);
+  await advance(10_000);
   await expect(canvas).toHaveAttribute("data-flight-scenery", "cloud-passage");
   await page.screenshot({ path: testInfo.outputPath("clouds.png") });
-  await page.clock.fastForward(10_000);
+  await advance(10_000);
   await expect(canvas).toHaveAttribute("data-flight-scenery", "starfield");
   await page.screenshot({ path: testInfo.outputPath("stars.png") });
-  await page.clock.fastForward(45_000);
-  expect(Number(await canvas.getAttribute("data-flight-loop"))).toBeGreaterThanOrEqual(6);
+  await advance(45_000);
+  await expect.poll(async () => Number(await canvas.getAttribute("data-flight-loop"))).toBeGreaterThanOrEqual(6);
   await flight.getByRole("button", { name: "Quiet mode" }).press("Enter");
   await expect(flight.getByRole("region", { name: "Passive flight activity" })).toBeVisible();
   await flight.getByRole("button", { name: "Open flight" }).press("Enter");
