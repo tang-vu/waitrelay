@@ -12,6 +12,7 @@ import {
   type FlightEngineState,
 } from "../../features/flight/engine/flight-engine";
 import { useFlightInput } from "../../features/flight/input/use-flight-input";
+import { flightSceneryAt } from "../../features/flight/engine/flight-scenery";
 import { renderFlight, type FlightRenderStage } from "../../features/flight/renderer/canvas-renderer";
 import { PassiveExperience } from "./PassiveExperience";
 import { ReducedMotionExperience } from "./ReducedMotionExperience";
@@ -165,6 +166,7 @@ export function FlightFrame({
     acknowledged: acknowledgementForSelection?.status === "appliedNow",
     terminal: isTerminal,
     ghostVisible: !sensitive,
+    modular: waitBand === "long",
   });
 
   useEffect(() => {
@@ -175,8 +177,9 @@ export function FlightFrame({
       acknowledged: acknowledgementForSelection?.status === "appliedNow",
       terminal: isTerminal,
       ghostVisible: !sensitive,
+      modular: waitBand === "long",
     };
-  }, [acknowledgementForSelection?.status, gate, isTerminal, selectedLane, sensitive, stage]);
+  }, [acknowledgementForSelection?.status, gate, isTerminal, selectedLane, sensitive, stage, waitBand]);
 
   useEffect(() => {
     if (reducedMotion || localMode !== "active" || waitBand === "instant") return;
@@ -205,6 +208,13 @@ export function FlightFrame({
     const draw = (now: number) => {
       engineRef.current = updateFlightEngine(engineRef.current, (now - previous) / 1_000);
       previous = now;
+      if (renderOptionsRef.current.modular) {
+        const scenery = flightSceneryAt(engineRef.current.sceneryElapsed);
+        if (canvas.dataset.flightLoop !== String(scenery.loop)) {
+          canvas.dataset.flightLoop = String(scenery.loop);
+          canvas.dataset.flightScenery = scenery.name;
+        }
+      }
       renderFlight(context, width, height, engineRef.current, renderOptionsRef.current);
       frame = requestAnimationFrame(draw);
     };

@@ -1,4 +1,5 @@
 import type { FlightEngineState } from "../engine/flight-engine";
+import { flightSceneryAt } from "../engine/flight-scenery";
 
 export type FlightRenderStage =
   | "understanding"
@@ -14,6 +15,7 @@ export type FlightRenderOptions = {
   acknowledged?: boolean;
   terminal: boolean;
   ghostVisible: boolean;
+  modular?: boolean;
 };
 
 const palettes: Record<FlightRenderStage, [string, string, string]> = {
@@ -120,7 +122,7 @@ function drawDistantHorizon(
   context.fillStyle = haze;
   context.fillRect(0, height * 0.55, width, height * 0.45);
 
-  context.globalAlpha = 0.28;
+  context.globalAlpha *= 0.28;
   context.fillStyle = "#050b18";
   context.beginPath();
   context.moveTo(-width * 0.1 - drift, height);
@@ -389,8 +391,13 @@ export function renderFlight(
   context.fillStyle = sky;
   context.fillRect(0, 0, width, height);
 
+  const scenery = options.modular ? flightSceneryAt(state.sceneryElapsed) : null;
+  context.save();
+  context.globalAlpha = scenery?.aurora ?? 1;
   drawAurora(context, width, height, state, accent);
+  context.globalAlpha = scenery?.constellation ?? 1;
   drawConstellationMesh(context, width, height, state);
+  context.restore();
 
   for (const star of state.stars) {
     const brightness = 0.24 + (Math.sin(state.elapsed * 0.7 + star.phase) + 1) * 0.2;
@@ -400,8 +407,12 @@ export function renderFlight(
     context.fill();
   }
 
+  context.save();
+  context.globalAlpha = scenery?.clouds ?? 1;
   drawClouds(context, width, height, state);
+  context.globalAlpha = scenery?.horizon ?? 1;
   drawDistantHorizon(context, width, height, state, accent);
+  context.restore();
   drawVelocityStreaks(context, width, height, state);
   if (options.gateVisible && !options.terminal) {
     drawCurrents(context, width, height, state, options.selectedLane, options.acknowledged);

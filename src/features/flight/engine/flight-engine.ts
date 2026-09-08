@@ -20,6 +20,7 @@ export type FlightStar = {
 
 export type FlightEngineState = {
   elapsed: number;
+  sceneryElapsed: number;
   birdY: number;
   birdVelocity: number;
   wingPhase: number;
@@ -51,6 +52,7 @@ export function createFlightEngine(seed: string): FlightEngineState {
 
   return {
     elapsed: 0,
+    sceneryElapsed: 0,
     birdY: 0.5,
     birdVelocity: 0,
     wingPhase: 0,
@@ -83,6 +85,7 @@ export function updateFlightEngine(
   return {
     ...state,
     elapsed: state.elapsed + delta,
+    sceneryElapsed: state.sceneryElapsed + (state.terminal || !Number.isFinite(deltaSeconds) ? 0 : Math.max(0, deltaSeconds)),
     birdY,
     birdVelocity,
     wingPhase: state.wingPhase + delta * (state.terminal ? 2.2 : 6.4),

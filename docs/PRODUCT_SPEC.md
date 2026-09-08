@@ -83,6 +83,13 @@ Each gate should be understood in about two seconds. There are no lives, death l
 
 Public lifecycle stages such as Understanding, Gathering, Evaluating, Composing, and Verifying alter ambience without implying percentage progress or revealing private reasoning.
 
+Long waits cycle through Aurora Drift, Cloud Passage, and Starfield scenery in
+ten-second modules, with a 1.5-second crossfade. These are decorative loops,
+independent of the agent's stage and decision requests. Quiet Mode remains
+available throughout; returning to flight resumes its scenery clock. Completion
+removes the activity immediately, including during a transition. Scenery catches
+up after a suspended browser frame while bird physics remains bounded.
+
 ## Interaction modes
 
 - **Active Mode:** Continuous abstract flight with keyboard, pointer, touch, and accessible button controls.
