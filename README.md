@@ -10,6 +10,10 @@ This repository contains a portable full-stack prototype for the Commons/VibeFi 
 
 ## Judge in 60 seconds
 
+[Automated verification](https://github.com/tang-vu/waitrelay/actions/workflows/verify.yml)
+runs the production build, full test suites, and deployment rollback checks.
+See [Verification and release gates](docs/VERIFICATION.md) for coverage and scope.
+
 Open the [public seeded demo](https://waitrelay.tangvu.dev/demo?scenario=standard&seed=fork-flight-001). It uses visibly labeled, recorded scenario evidence and requires no credentials.
 
 1. Start the prefilled task. Agent work begins immediately.

@@ -41,11 +41,16 @@ test("empty state and active flight have no serious accessibility violations", a
   });
   expect(seriousViolations(flightResult)).toEqual([]);
 
-  const visibleControls = flightFrame.locator("button:visible");
-  for (let index = 0; index < await visibleControls.count(); index += 1) {
-    const box = await visibleControls.nth(index).boundingBox();
-    expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
-    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+  // Measure one rendered state atomically: a gate may be replaced between
+  // separate locator calls while the independent agent continues working.
+  const controls = await flightFrame.locator("button:visible").evaluateAll((buttons) => buttons.map((button) => {
+    const box = button.getBoundingClientRect();
+    return { label: button.textContent?.trim(), width: box.width, height: box.height };
+  }));
+  expect(controls.length).toBeGreaterThan(0);
+  for (const control of controls) {
+    expect(control.width, control.label).toBeGreaterThanOrEqual(44);
+    expect(control.height, control.label).toBeGreaterThanOrEqual(44);
   }
 });
 

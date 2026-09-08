@@ -165,8 +165,7 @@ main { width: min(1180px, calc(100% - 36px)); margin: 0 auto; padding-bottom: 80
   .workspace-compact .prompt-composer textarea{height:58px;min-height:58px;padding:10px 13px}
   .workspace-head{display:block}
   .workspace h2{font-size:1.4rem}
-  .status-badges{justify-content:flex-start;flex-wrap:nowrap;gap:5px;margin-top:11px;overflow-x:auto;scrollbar-width:none}
-  .status-badges::-webkit-scrollbar{display:none}
+  .status-badges{justify-content:flex-start;flex-wrap:wrap;gap:5px;margin-top:11px}
   .badge{flex:0 0 auto;min-height:28px;padding:4px 7px;font-size:.63rem}
   .prompt-composer{margin-top:18px}
   .prompt-composer textarea{height:104px;min-height:88px;padding:15px}

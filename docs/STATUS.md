@@ -149,9 +149,13 @@ The demo video is recorded locally. No video publication, purchase, or hackathon
 
 ## Next work
 
-1. Review the local video and obtain explicit authorization before publication.
-2. Replace the remaining video placeholder only after a real public video URL exists.
-3. Submit before the September 17 operational deadline after explicit authorization.
+1. Complete the latency-adaptation audit: the specification calls for 8-12 second
+   repeatable modules on long waits. The current renderer has continuous seeded
+   scenery and Quiet Mode, but a distinct module cadence and the over-60-second
+   behavior have not yet been established by direct verification.
+2. Review the local video and obtain explicit authorization before publication.
+3. Replace the remaining video placeholder only after a real public video URL exists.
+4. Submit before the September 17 operational deadline after explicit authorization.
 
 ## Risks and honest limitations
 
