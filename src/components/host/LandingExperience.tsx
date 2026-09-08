@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import { FlightSandboxHost } from "@/components/flight";
@@ -116,17 +116,16 @@ export function LandingExperience({ scenario = "standard", seed = "fork-flight-0
     return () => cancelAnimationFrame(frame);
   }, [controller.activityDismissed, controller.runId, controller.shouldShowActivity]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (controller.status !== "completed") return;
+    // Frame and focus the committed answer before the next paint. A passive
+    // effect followed by another animation frame leaves a visible extra wait.
+    resultRef.current?.focus({ preventScroll: true });
+    scrollIntoViewImmediately(resultRef.current);
     performance.mark("waitrelay-result-visible");
     if (performance.getEntriesByName("waitrelay-run-complete-received", "mark").length > 0) {
       performance.measure("waitrelay-completion-takeover", "waitrelay-run-complete-received", "waitrelay-result-visible");
     }
-    const frame = requestAnimationFrame(() => {
-      resultRef.current?.focus({ preventScroll: true });
-      scrollIntoViewImmediately(resultRef.current);
-    });
-    return () => cancelAnimationFrame(frame);
   }, [controller.status]);
 
   useEffect(() => {

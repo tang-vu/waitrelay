@@ -12,7 +12,9 @@ The application job uses a clean Ubuntu runner, the Node version in
 the complete Vitest suite, builds production assets, checks TypeScript, installs
 Chromium with its OS dependencies, runs every configured Playwright project,
 and repeats the seeded judge path three times. Browser retries are disabled in
-this gate. Failure traces and reports are retained for seven days.
+this gate. CI uses one browser worker so the completion timing assertion does
+not compete with another browser's accessibility scan on the shared runner.
+Failure traces and reports are retained for seven days.
 
 A separate Windows job exercises deployment success, failed build rollback,
 and failed preflight rollback with isolated command doubles. It does not access

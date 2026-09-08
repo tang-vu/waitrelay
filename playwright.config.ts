@@ -6,7 +6,8 @@ const skipWebServer = process.env.PLAYWRIGHT_SKIP_WEBSERVER === "1";
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: false,
-  workers: 2,
+  // Keep timing assertions and axe scans from contending for a small CI runner.
+  workers: process.env.CI ? 1 : 2,
   retries: process.env.CI ? 2 : 0,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
