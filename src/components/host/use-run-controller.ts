@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 
 import {
   PublicEventSchema,
@@ -141,13 +142,17 @@ export function useRunController(options: RunControllerOptions = {}): RunControl
     }
     if (event.type === "run.complete") {
       performance.mark("waitrelay-run-complete-received");
-      setResult(event);
-      setStatus("completed");
-      setConnection("idle");
-      setProviderMode(event.providerMode);
-      setActiveChoice(null);
-      setActivityReady(false);
       clearTransport();
+      // Completion is the one urgent transport update: do not leave the ready
+      // answer queued behind another canvas frame in React's normal scheduler.
+      flushSync(() => {
+        setResult(event);
+        setStatus("completed");
+        setConnection("idle");
+        setProviderMode(event.providerMode);
+        setActiveChoice(null);
+        setActivityReady(false);
+      });
     }
     if (event.type === "run.cancel.ack") {
       setStatus("cancelled");
