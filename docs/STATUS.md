@@ -2,6 +2,28 @@
 
 Last updated: 2026-09-09
 
+## September 9 long-wait completion audit
+
+- Long waits now cycle through Aurora Drift, Cloud Passage, and Starfield in
+  ten-second modules with 1.5-second crossfades. Scenery time is independent of
+  the bounded bird-physics step and never creates a decision or a finish gate.
+- Three unit checks cover repeated cycles beyond a minute, continuity at module
+  boundaries, suspended-frame recovery, and freezing scenery on termination.
+- Desktop and mobile browser checks advance only the decorative frame clock
+  beyond 65 seconds. Host timers and the server remain real: the 30-second run
+  completes independently, preserves its accepted choice in the receipt, removes
+  the flight, and focuses the answer. Quiet Mode and returning to flight also pass.
+- [Release CI](https://github.com/tang-vu/waitrelay/actions/runs/34265502132)
+  passed all 117 Vitest tests, all 56 browser checks, three consecutive seeded
+  smoke runs, and three Windows rollback cases, with browser retries disabled.
+  Frozen installation, lint, production build, and TypeScript also passed.
+- Application commit `f24c4f9` is deployed as build `uP6bdQjk2cJkfbC5VDeCz`.
+  Hosting preflight, both public long-wait checks, and three public seeded smoke
+  runs passed. Public Starfield captures are linked from the Judging Matrix.
+- The latency-adaptation gap is closed. Remaining publication/submission steps
+  require explicit authorization; the local video and submission copy are ready
+  for review. The 50-word and 150-word descriptions have their stated word counts.
+
 ## September 9 CI and completion-latency verification
 
 - Added automatic GitHub Actions verification on Linux and isolated deployment
@@ -25,7 +47,7 @@ Last updated: 2026-09-09
   passed across three repetitions; three separate local measurements were
   62.6, 60.7, and 67.7 ms. The public causal-flow timing assertion also passed.
 - Application commit `d473112` was deployed through the verified rollback path.
-  The active production build is `ei0ql_JL8DnNZ8DAnBQxv`; hosting preflight and
+  That rollout used build `ei0ql_JL8DnNZ8DAnBQxv`; hosting preflight and
   the four affected public desktop/mobile checks passed after deployment.
   Three consecutive public seeded smoke runs also passed without console errors.
 - The production dependency audit reported no known vulnerabilities. Local
@@ -180,13 +202,9 @@ The demo video is recorded locally. No video publication, purchase, or hackathon
 
 ## Next work
 
-1. Complete the latency-adaptation audit: the specification calls for 8-12 second
-   repeatable modules on long waits. The current renderer has continuous seeded
-   scenery and Quiet Mode, but a distinct module cadence and the over-60-second
-   behavior have not yet been established by direct verification.
-2. Review the local video and obtain explicit authorization before publication.
-3. Replace the remaining video placeholder only after a real public video URL exists.
-4. Submit before the September 17 operational deadline after explicit authorization.
+1. Review the local video and obtain explicit authorization before publication.
+2. Replace the remaining video placeholder only after a real public video URL exists.
+3. Submit before the September 17 operational deadline after explicit authorization.
 
 ## Risks and honest limitations
 

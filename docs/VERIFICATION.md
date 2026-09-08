@@ -43,6 +43,15 @@ The detailed feature-to-test mapping is in [Judging Matrix](JUDGING_MATRIX.md).
 Date-specific results and remaining work are in [Implementation Status](STATUS.md).
 Operational commands and rollback behavior are in [Local Hosting](../ops/LOCAL_HOSTING.md).
 
+To regenerate the long-wait screenshots against the public build, set
+`PLAYWRIGHT_BASE_URL=https://waitrelay.tangvu.dev` and
+`PLAYWRIGHT_SKIP_WEBSERVER=1`, then run
+`pnpm exec playwright test tests/e2e/long-wait.spec.ts --workers=1 --output=artifacts/long-wait-proof`.
+Each project writes `aurora.png`, `clouds.png`, and `stars.png`. These captures
+use the test-controlled decorative frame clock; they do not claim that the
+30-second agent run took 65 seconds. The dedicated output directory preserves
+them when a subsequent ordinary Playwright run clears `test-results/`.
+
 ## Release sequence
 
 1. Wait for both CI jobs to pass for the application commit being released.
