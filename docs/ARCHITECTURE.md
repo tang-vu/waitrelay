@@ -112,9 +112,29 @@ Every event includes `protocolVersion`, `runId`, `eventId`, `sequence`, `timesta
 
 ## Transport and reconnection
 
+The iframe handshake retains candidate ports until one sends a validated
+`flight.ready`. It then closes the other candidates and sends the latest
+committed stage, mode, choice, ACK, and terminal state. This avoids both stale
+gate replay during retries and discarding the single port already accepted by
+a slow iframe before its readiness confirmation arrives.
+
 Server-Sent Events are primary. The endpoint supports `Last-Event-ID`, replays missing public events, and may emit comment heartbeats. On connection failure, native EventSource reconnection remains available while the host can poll validated snapshots. When SSE reopens it stops polling. Both paths share sequence suppression, so an older polling response cannot overwrite a newer SSE update.
 
 The answer surface is driven by authoritative host state, not animation state. On `run.complete`, active gate controls are disabled synchronously and focus moves to the result heading. Decorative rendering may be cleaned up asynchronously.
+
+The host validates run creation responses, including that transport URLs belong
+to the returned run on the same origin. Creation requests time out after 15
+seconds without automatically retrying a potentially accepted task. Snapshot
+requests time out after 10 seconds and never overlap. Starting a new run,
+unmounting, or reopening SSE aborts obsolete requests and invalidates their
+callbacks. Browsers without EventSource use snapshots directly.
+
+A snapshot 404 or 410 moves only the browser into `unavailable`: it does not
+claim that the server failed or cancelled the run. The activity and transport
+stop, and the user can return to the unchanged prompt to begin a fresh run.
+Transient network and 5xx failures continue polling. Cancelled, failed, and
+unavailable screens receive keyboard focus and provide an explicit return to
+the composer. Completed runs display an idle transport after cleanup.
 
 ## Structured Tokyo pipeline
 

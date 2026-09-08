@@ -2,6 +2,25 @@ import { expect, test } from "@playwright/test";
 
 const canary = "PROMPT_CANARY_7f2c91";
 
+test("late iframe initialization still receives the current gate after handshake retry", async ({ page }) => {
+  await page.addInitScript(() => {
+    if (window === window.top) return;
+    const add = window.addEventListener.bind(window);
+    window.addEventListener = ((type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => {
+      if (type === "message") setTimeout(() => add(type, listener, options), 900);
+      else add(type, listener, options);
+    }) as typeof window.addEventListener;
+  });
+  await page.goto("/demo?scenario=standard&seed=delayed-flight-listener");
+  await page.getByRole("button", { name: "Start the relay" }).click();
+  const flight = page.frameLocator('iframe[title="WaitRelay Fork Flight"]');
+  const choice = flight.getByRole("button", { name: /Less Walking/ });
+  await expect(choice).toBeVisible({ timeout: 4_000 });
+  await choice.click();
+  await expect(flight.getByText("Applied now")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your route is ready" })).toBeVisible({ timeout: 9_000 });
+});
+
 test.describe("Fork Flight causal loop", () => {
   test("an 8-second run applies two choices and reveals a computed receipt", async ({ page }) => {
     const consoleErrors: string[] = [];

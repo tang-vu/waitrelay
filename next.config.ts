@@ -17,6 +17,8 @@ const hostDocumentHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Keep local release verification separate from a running production build.
+  distDir: process.env.WAITRELAY_TEST_BUILD === "1" ? ".next-test" : ".next",
   poweredByHeader: false,
   async headers() {
     return [

@@ -25,7 +25,11 @@ export function FlightCard({
 
   useEffect(() => {
     if (sensitive) return;
-    if (localStorage.getItem(COSMETIC_KEY) !== "moon-courier-v1") localStorage.setItem(COSMETIC_KEY, "moon-courier-v1");
+    try {
+      if (localStorage.getItem(COSMETIC_KEY) !== "moon-courier-v1") localStorage.setItem(COSMETIC_KEY, "moon-courier-v1");
+    } catch {
+      // Cosmetic persistence is optional; a blocked store must not hide the answer.
+    }
   }, [sensitive]);
 
   return <section className="flight-card" aria-labelledby="flight-card-title">

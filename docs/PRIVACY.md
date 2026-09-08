@@ -88,6 +88,16 @@ Sensitive Mode:
 
 The implemented Flight Card contains a generic bird identity, applied-choice count, duration band, brand, and sanitized seed link. It cannot contain raw prompt, final answer, user identity, personal entities, sensitive metadata, or exact duration. Sensitive Mode disables its sharing link.
 
+The separate host result has an explicit **Copy itinerary** action. Clicking it
+copies the complete agent answer, including the recorded-data notice, to the
+system clipboard. It does not write the answer to browser storage or the game
+bridge. Sensitive Mode removes this action. If clipboard access is unavailable,
+the host opens the full answer for manual selection and reports the failure.
+
+Blocked browser storage never prevents the result from rendering. Cosmetic
+identity persistence is optional; a Flight Pack preview reports when its
+selection could only be kept for the current session.
+
 ## Verification
 
 The browser privacy test injects a unique canary into the prompt and checks that it is absent from:

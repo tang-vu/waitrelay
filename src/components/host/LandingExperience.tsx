@@ -65,6 +65,7 @@ export function LandingExperience({ scenario = "standard", seed = "fork-flight-0
   const [gameFailed, setGameFailed] = useState(false);
   const [relaySignal, setRelaySignal] = useState<RelaySignalState | null>(null);
   const resultRef = useRef<HTMLElement>(null);
+  const terminalRef = useRef<HTMLElement>(null);
   const runShellRef = useRef<HTMLElement>(null);
   const autoScrolledRunRef = useRef<string | null>(null);
   const automatedProbeRef = useRef<string | null>(null);
@@ -124,6 +125,15 @@ export function LandingExperience({ scenario = "standard", seed = "fork-flight-0
     const frame = requestAnimationFrame(() => {
       resultRef.current?.focus({ preventScroll: true });
       scrollIntoViewImmediately(resultRef.current);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [controller.status]);
+
+  useEffect(() => {
+    if (!["failed", "cancelled", "unavailable"].includes(controller.status)) return;
+    const frame = requestAnimationFrame(() => {
+      terminalRef.current?.focus({ preventScroll: true });
+      scrollIntoViewImmediately(terminalRef.current);
     });
     return () => cancelAnimationFrame(frame);
   }, [controller.status]);
@@ -254,11 +264,22 @@ export function LandingExperience({ scenario = "standard", seed = "fork-flight-0
       </div>
     </section>}
 
-    {controller.status === "cancelled" && <section className="terminal-message" tabIndex={-1}><span className="eyebrow">Run cancelled</span><h2>The flight and agent stopped.</h2><p>Dismiss activity would have kept the agent running. Cancel AI run ended it.</p></section>}
-    {controller.status === "failed" && <section className="terminal-message error-message" role="alert"><span className="eyebrow">Safe exit</span><h2>The provider did not complete this run.</h2><p>{controller.error}</p><p>The game closed without trapping the result surface or exposing provider details.</p></section>}
+    {["cancelled", "failed", "unavailable"].includes(controller.status) && <section
+      className={`terminal-message ${controller.status === "failed" ? "error-message" : ""}`}
+      ref={terminalRef} tabIndex={-1} aria-labelledby="terminal-title"
+    >
+      <span className="eyebrow">{controller.status === "cancelled" ? "Run cancelled" : controller.status === "unavailable" ? "Run unavailable" : "Unable to continue"}</span>
+      <h2 id="terminal-title">{controller.status === "cancelled" ? "The flight and agent stopped." : controller.status === "unavailable" ? "This run is no longer available." : controller.runId ? "The provider did not complete this run." : "The run could not be started."}</h2>
+      <p>{controller.status === "cancelled" ? "Your task is still in the composer. You can edit it or start a new run whenever you are ready." : controller.error}</p>
+      <button className="secondary-button" type="button" onClick={() => {
+        const prompt = document.getElementById("task-prompt");
+        prompt?.focus({ preventScroll: true });
+        scrollIntoViewImmediately(prompt);
+      }}>Edit task and try again</button>
+    </section>}
 
     {controller.result && <div className="result-stack">
-      <AgentResult result={controller.result} ref={resultRef} />
+      <AgentResult key={controller.result.runId} result={controller.result} sensitive={sensitive} ref={resultRef} />
       <ImpactReceipt receipt={controller.result.impactReceipt} />
       <div className="post-run-grid"><FlightCard appliedChoices={appliedChoices} durationBand={controller.context?.waitBand} sensitive={sensitive} seed={seed} scenario={scenario} /><FlightPack sensitive={sensitive} /></div>
     </div>}

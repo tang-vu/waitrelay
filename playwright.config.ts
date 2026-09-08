@@ -42,7 +42,7 @@ export default defineConfig({
     },
     {
       name: "mobile-chromium",
-      testMatch: ["**/mobile-touch.spec.ts", "**/accessibility.spec.ts"],
+      testMatch: ["**/mobile-touch.spec.ts", "**/accessibility.spec.ts", "**/result-experience.spec.ts", "**/recovery.spec.ts"],
       use: { ...devices["Pixel 7"], viewport: { width: 390, height: 844 } },
     },
   ],

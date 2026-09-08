@@ -12,6 +12,7 @@ import {
 } from "@/shared/contracts/events";
 import type { ContextCapsule } from "@/shared/contracts/context-capsule";
 import type { CreateRunResponse, DemoScenario, RunStatus } from "./run-types";
+import { CreateRunResponseSchema } from "./run-types";
 import { shouldAcceptTransportEvent, shouldApplyPollingSnapshot } from "./transport-ordering";
 
 type ConnectionState = "idle" | "connecting" | "live" | "polling" | "offline";
@@ -24,7 +25,7 @@ export interface CrossedPayload {
 
 export interface RunController {
   runId: string | null;
-  status: RunStatus | "idle";
+  status: RunStatus | "idle" | "unavailable";
   providerMode: ProviderMode | null;
   context: ContextCapsule | null;
   visualSeed: string | null;
@@ -60,7 +61,7 @@ export interface RunControllerOptions {
 
 export function useRunController(options: RunControllerOptions = {}): RunController {
   const [runId, setRunId] = useState<string | null>(null);
-  const [status, setStatus] = useState<RunStatus | "idle">("idle");
+  const [status, setStatus] = useState<RunStatus | "idle" | "unavailable">("idle");
   const [providerMode, setProviderMode] = useState<ProviderMode | null>(null);
   const [context, setContext] = useState<ContextCapsule | null>(null);
   const [visualSeed, setVisualSeed] = useState<string | null>(null);
@@ -81,6 +82,10 @@ export function useRunController(options: RunControllerOptions = {}): RunControl
   const seenEventIdsRef = useRef(new Set<string>());
   const currentRunRef = useRef<string | null>(null);
   const connectionOpensRef = useRef(0);
+  const transportEpochRef = useRef(0);
+  const pollEpochRef = useRef(0);
+  const pollAbortRef = useRef<AbortController | null>(null);
+  const startAbortRef = useRef<AbortController | null>(null);
 
   const recordFlightPayload = useCallback((direction: CrossedPayload["direction"], payload: unknown) => {
     setCrossedPayloads((current) => [...current.slice(-49), {
@@ -91,11 +96,17 @@ export function useRunController(options: RunControllerOptions = {}): RunControl
   }, []);
 
   const stopPolling = useCallback(() => {
+    pollEpochRef.current += 1;
+    pollAbortRef.current?.abort();
+    pollAbortRef.current = null;
     if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     pollTimerRef.current = null;
   }, []);
 
   const clearTransport = useCallback(() => {
+    transportEpochRef.current += 1;
+    startAbortRef.current?.abort();
+    startAbortRef.current = null;
     eventSourceRef.current?.close();
     eventSourceRef.current = null;
     stopPolling();
@@ -132,6 +143,7 @@ export function useRunController(options: RunControllerOptions = {}): RunControl
       performance.mark("waitrelay-run-complete-received");
       setResult(event);
       setStatus("completed");
+      setConnection("idle");
       setProviderMode(event.providerMode);
       setActiveChoice(null);
       setActivityReady(false);
@@ -139,6 +151,7 @@ export function useRunController(options: RunControllerOptions = {}): RunControl
     }
     if (event.type === "run.cancel.ack") {
       setStatus("cancelled");
+      setConnection("idle");
       setActiveChoice(null);
       setActivityReady(false);
       clearTransport();
@@ -146,6 +159,7 @@ export function useRunController(options: RunControllerOptions = {}): RunControl
     if (event.type === "run.error") {
       setError(event.message);
       setStatus("failed");
+      setConnection("idle");
       setActiveChoice(null);
       setActivityReady(false);
       clearTransport();
@@ -154,12 +168,32 @@ export function useRunController(options: RunControllerOptions = {}): RunControl
 
   const beginPolling = useCallback((id: string) => {
     if (pollTimerRef.current) return;
+    const epoch = transportEpochRef.current;
+    const pollEpoch = pollEpochRef.current;
+    const isCurrent = () => epoch === transportEpochRef.current && pollEpoch === pollEpochRef.current;
+    let inFlight = false;
     setConnection(navigator.onLine ? "polling" : "offline");
     const poll = async () => {
+      if (inFlight || !isCurrent()) return;
+      inFlight = true;
+      const abort = new AbortController();
+      pollAbortRef.current = abort;
+      const timeout = setTimeout(() => abort.abort(), 10_000);
       try {
-        const response = await fetch(`/api/runs/${encodeURIComponent(id)}/snapshot`, { cache: "no-store" });
-        if (!response.ok) return;
+        const response = await fetch(`/api/runs/${encodeURIComponent(id)}/snapshot`, { cache: "no-store", signal: abort.signal });
+        if (!isCurrent()) return;
+        if (response.status === 404 || response.status === 410) {
+          clearTransport();
+          setStatus("unavailable");
+          setConnection("idle");
+          setActiveChoice(null);
+          setActivityReady(false);
+          setError("The server no longer has this run. It may have expired or the service may have restarted. Your task is still in the composer.");
+          return;
+        }
+        if (!response.ok) throw new Error("Snapshot unavailable");
         const snapshot = await response.json() as { runId: string; latestSequence: number; events: unknown[] };
+        if (!isCurrent()) return;
         if (!shouldApplyPollingSnapshot({
           expectedRunId: currentRunRef.current,
           snapshotRunId: snapshot.runId,
@@ -167,16 +201,21 @@ export function useRunController(options: RunControllerOptions = {}): RunControl
           latestSequence: latestSequenceRef.current,
         })) return;
         snapshot.events.forEach(acceptEvent);
-        setConnection("polling");
+        if (isCurrent()) setConnection("polling");
       } catch {
-        setConnection("offline");
+        if (isCurrent()) setConnection("offline");
+      } finally {
+        clearTimeout(timeout);
+        if (pollAbortRef.current === abort) pollAbortRef.current = null;
+        inFlight = false;
       }
     };
     void poll();
     pollTimerRef.current = setInterval(() => void poll(), 1_500);
-  }, [acceptEvent]);
+  }, [acceptEvent, clearTransport]);
 
   const connect = useCallback((created: CreateRunResponse) => {
+    const epoch = transportEpochRef.current;
     setConnection("connecting");
     if (options.transportFault === "polling") {
       setTransportEvidence("Fault Lab forced SSE unavailable. Validated snapshots are now authoritative.");
@@ -186,18 +225,27 @@ export function useRunController(options: RunControllerOptions = {}): RunControl
     const streamUrl = options.transportFault === "reconnect"
       ? `${created.streamUrl}?fault=reconnect-once`
       : created.streamUrl;
-    const source = new EventSource(streamUrl);
+    let source: EventSource;
+    try {
+      source = new EventSource(streamUrl);
+    } catch {
+      beginPolling(created.runId);
+      return;
+    }
     eventSourceRef.current = source;
     source.onopen = () => {
+      if (epoch !== transportEpochRef.current) return;
       connectionOpensRef.current += 1;
       stopPolling();
       setConnection("live");
       if (connectionOpensRef.current > 1) setTransportEvidence("SSE reconnected and replayed only events after Last-Event-ID.");
     };
     source.onmessage = (message) => {
+      if (epoch !== transportEpochRef.current) return;
       try { acceptEvent(JSON.parse(message.data)); } catch { /* malformed events fail closed */ }
     };
     source.onerror = () => {
+      if (epoch !== transportEpochRef.current) return;
       if (options.transportFault === "reconnect" && connectionOpensRef.current === 1) {
         setConnection("connecting");
         return;
@@ -208,6 +256,10 @@ export function useRunController(options: RunControllerOptions = {}): RunControl
 
   const start = useCallback(async (prompt: string, options: StartOptions) => {
     clearTransport();
+    const epoch = transportEpochRef.current;
+    currentRunRef.current = null;
+    setRunId(null);
+    setProviderMode(null);
     performance.clearMarks("waitrelay-run-complete-received");
     performance.clearMarks("waitrelay-result-visible");
     performance.clearMeasures("waitrelay-completion-takeover");
@@ -227,28 +279,46 @@ export function useRunController(options: RunControllerOptions = {}): RunControl
     latestSequenceRef.current = -1;
     seenEventIdsRef.current = new Set();
     connectionOpensRef.current = 0;
+    // The wait starts at submission, not when a slow creation response arrives.
+    mountTimerRef.current = setTimeout(() => setActivityReady(true), 850);
+    const abort = new AbortController();
+    startAbortRef.current = abort;
+    const timeout = setTimeout(() => abort.abort(), 15_000);
+    let failureMessage = "The start could not be confirmed. Check your connection and try again. Your task is still in the composer.";
     try {
       const response = await fetch("/api/runs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt, ...options }),
+        signal: abort.signal,
       });
-      if (!response.ok) throw new Error("The run could not be started.");
-      const created = await response.json() as CreateRunResponse;
+      if (!response.ok) {
+        if (response.status === 429) failureMessage = "The run service is busy. Wait a few seconds, then try again.";
+        if (response.status === 400 || response.status === 413) failureMessage = "The task could not be accepted. Check your prompt and try again.";
+        throw new Error("Start rejected");
+      }
+      const created = CreateRunResponseSchema.parse(await response.json());
+      if (epoch !== transportEpochRef.current) return;
       currentRunRef.current = created.runId;
       setRunId(created.runId);
       setProviderMode(created.providerMode);
       connect(created);
-      mountTimerRef.current = setTimeout(() => setActivityReady(true), 850);
-    } catch (startError) {
+    } catch {
+      if (epoch !== transportEpochRef.current) return;
+      clearTransport();
       setStatus("failed");
+      setActivityReady(false);
       setConnection("offline");
-      setError(startError instanceof Error ? startError.message : "The run could not be started.");
+      setError(failureMessage);
+    } finally {
+      clearTimeout(timeout);
+      if (startAbortRef.current === abort) startAbortRef.current = null;
     }
   }, [clearTransport, connect]);
 
   const choose = useCallback(async (request: ChoiceRequest, optionId: string, metadata?: { signalId: string; signalledAt: string }) => {
-    if (!runId || status !== "running") return;
+    if (!runId || status !== "running" || request.runId !== runId) return;
+    const epoch = transportEpochRef.current;
     const signalId = metadata?.signalId ?? crypto.randomUUID();
     const signalledAt = metadata?.signalledAt ?? new Date().toISOString();
     try {
@@ -259,6 +329,7 @@ export function useRunController(options: RunControllerOptions = {}): RunControl
       });
       if (!response.ok) throw new Error("choice relay failed");
     } catch {
+      if (epoch !== transportEpochRef.current) return;
       setTransportEvidence("Choice confirmation was interrupted. The agent is continuing, and the final Impact Receipt is authoritative.");
       setActiveChoice(null);
       setActivityDismissed(true);
@@ -271,25 +342,30 @@ export function useRunController(options: RunControllerOptions = {}): RunControl
 
   const cancel = useCallback(async () => {
     if (!runId || status !== "running") return;
+    const epoch = transportEpochRef.current;
     try {
       const response = await fetch(`/api/runs/${encodeURIComponent(runId)}/cancel`, { method: "POST" });
       if (!response.ok) throw new Error("cancel failed");
     } catch {
+      if (epoch !== transportEpochRef.current) return;
       setTransportEvidence("Cancellation confirmation was interrupted. The next authoritative run event determines the terminal state.");
     }
   }, [runId, status]);
 
   useEffect(() => {
-    const offline = () => setConnection("offline");
-    const online = () => { if (status === "running") setConnection("polling"); };
+    const offline = () => { if (status === "running") setConnection("offline"); };
+    const online = () => {
+      if (status === "running" && currentRunRef.current) beginPolling(currentRunRef.current);
+    };
     window.addEventListener("offline", offline);
     window.addEventListener("online", online);
     return () => {
       window.removeEventListener("offline", offline);
       window.removeEventListener("online", online);
-      clearTransport();
     };
-  }, [clearTransport, status]);
+  }, [beginPolling, status]);
+
+  useEffect(() => clearTransport, [clearTransport]);
 
   return useMemo(() => ({
     runId, status, providerMode, context, visualSeed, connection, stage, activeChoice, latestAck, result,

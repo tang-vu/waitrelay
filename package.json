@@ -21,6 +21,8 @@
     "test:privacy": "vitest run tests/privacy",
     "test:e2e": "playwright test",
     "test:a11y": "playwright test tests/e2e/accessibility.spec.ts",
+    "test:ops": "powershell -NoProfile -ExecutionPolicy Bypass -File tests/ops/deploy-local.test.ps1",
+    "deploy:local": "powershell -NoProfile -ExecutionPolicy Bypass -File ops/deploy-local.ps1",
     "demo:preflight": "playwright test tests/e2e/demo-smoke.spec.ts --project=chromium --repeat-each=3",
     "demo:capture": "node ops/capture-demo.mjs",
     "host:preflight": "powershell -NoProfile -ExecutionPolicy Bypass -File ops/hosting-preflight.ps1"

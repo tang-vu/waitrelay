@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 
 import type { ContextCapsule } from "../../shared/contracts/context-capsule";
 import {
@@ -56,6 +56,11 @@ export function FlightSandboxHost({
 }: FlightSandboxHostProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const bridgeRef = useRef<FlightHostBridge | undefined>(undefined);
+  const pendingBridgesRef = useRef<FlightHostBridge[]>([]);
+  const stateRef = useRef({ context, visualSeed, stage, gate, acknowledgement, terminal, mode, sensitive });
+  useLayoutEffect(() => {
+    stateRef.current = { context, visualSeed, stage, gate, acknowledgement, terminal, mode, sensitive };
+  }, [acknowledgement, context, gate, mode, sensitive, stage, terminal, visualSeed]);
   const readyRef = useRef(false);
   const connectTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const failureTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -89,12 +94,27 @@ export function FlightSandboxHost({
     }
   }, []);
 
+  const sendCurrentState = useCallback((bridge: FlightHostBridge) => {
+    const { stage, mode, gate, acknowledgement, terminal } = stateRef.current;
+    bridge.send(makeBridgeEnvelope({ runId, nonce }, { type: "run.progress", stage }));
+    bridge.send(makeBridgeEnvelope({ runId, nonce }, { type: "flight.mode", mode }));
+    if (gate) bridge.send(makeBridgeEnvelope({ runId, nonce }, { type: "choice.request", gate }));
+    if (acknowledgement) bridge.send(makeBridgeEnvelope({ runId, nonce }, { type: "choice.ack", acknowledgement }));
+    if (terminal) bridge.send(makeBridgeEnvelope({ runId, nonce }, { type: "run.terminal", status: terminal }));
+  }, [nonce, runId]);
+
+  const closeChannels = useCallback(() => {
+    for (const bridge of new Set([...pendingBridgesRef.current, bridgeRef.current])) bridge?.destroy();
+    pendingBridgesRef.current = [];
+    bridgeRef.current = undefined;
+  }, []);
+
   const openChannel = useCallback(() => {
     if (readyRef.current) return;
     const iframe = iframeRef.current;
     if (!iframe) return;
-    bridgeRef.current?.destroy();
-    bridgeRef.current = connectFlightHost({
+    const { context, stage, visualSeed, sensitive } = stateRef.current;
+    const bridge: FlightHostBridge = connectFlightHost({
       iframe,
       connect: {
         type: "flight.port.connect",
@@ -106,40 +126,46 @@ export function FlightSandboxHost({
         visualSeed,
         sensitive,
       },
-      onMessage: handleFlightMessage,
+      onMessage(message) {
+        if (message.type === "flight.ready") {
+          if (!pendingBridgesRef.current.includes(bridge)) return;
+          bridgeRef.current = bridge;
+          for (const pending of pendingBridgesRef.current) if (pending !== bridge) pending.destroy();
+          pendingBridgesRef.current = [];
+          handleFlightMessage(message);
+          sendCurrentState(bridge);
+        } else if (readyRef.current && bridgeRef.current === bridge) {
+          handleFlightMessage(message);
+        }
+      },
       onCrossBoundary: (direction, payload) => callbackRef.current.onCrossBoundary?.(direction, payload),
     });
-    const bridge = bridgeRef.current;
-    bridge.send(makeBridgeEnvelope({ runId, nonce }, { type: "run.progress", stage }));
-    bridge.send(makeBridgeEnvelope({ runId, nonce }, { type: "flight.mode", mode }));
-    if (gate) bridge.send(makeBridgeEnvelope({ runId, nonce }, { type: "choice.request", gate }));
-    if (acknowledgement) {
-      bridge.send(makeBridgeEnvelope({ runId, nonce }, { type: "choice.ack", acknowledgement }));
-    }
-    if (terminal) bridge.send(makeBridgeEnvelope({ runId, nonce }, { type: "run.terminal", status: terminal }));
-  }, [acknowledgement, context, gate, handleFlightMessage, mode, nonce, runId, sensitive, stage, terminal, visualSeed]);
+    // Keep candidates alive until one confirms readiness. The frame accepts
+    // only one port; discarding it before its ACK arrives can strand the frame.
+    pendingBridgesRef.current.push(bridge);
+  }, [handleFlightMessage, nonce, runId, sendCurrentState]);
 
   const beginHandshake = useCallback(() => {
     readyRef.current = false;
+    closeChannels();
     connectTimersRef.current.forEach(clearTimeout);
     connectTimersRef.current = [];
     if (failureTimerRef.current) clearTimeout(failureTimerRef.current);
     openChannel();
-    connectTimersRef.current = [100, 300, 700].map((delay) => setTimeout(openChannel, delay));
+    connectTimersRef.current = [100, 300, 700, 1_200, 1_800].map((delay) => setTimeout(openChannel, delay));
     failureTimerRef.current = setTimeout(() => {
       connectTimersRef.current.forEach(clearTimeout);
       connectTimersRef.current = [];
-      bridgeRef.current?.destroy();
-      bridgeRef.current = undefined;
+      closeChannels();
       callbackRef.current.onFailure?.();
     }, 2_500);
-  }, [openChannel]);
+  }, [closeChannels, openChannel]);
 
   useEffect(() => () => {
     connectTimersRef.current.forEach(clearTimeout);
     if (failureTimerRef.current) clearTimeout(failureTimerRef.current);
-    bridgeRef.current?.destroy();
-  }, []);
+    closeChannels();
+  }, [closeChannels]);
   useEffect(() => {
     bridgeRef.current?.send(makeBridgeEnvelope({ runId, nonce }, { type: "run.progress", stage }));
   }, [nonce, runId, stage]);

@@ -1,8 +1,119 @@
 # Implementation Status
 
-Last updated: 2026-08-31
+Last updated: 2026-09-09
+
+## September 9 production rollout
+
+- Production was updated through `pnpm deploy:local`; the active build ID is
+  `sndG0diTg0Zr9vlfIYhSl`. Previous builds remain under `.release-backups`.
+- The rollout now has a deployment lock, bounded health checks, and rollback
+  after build/startup/preflight failure. `pnpm test:ops` passed three isolated
+  scenarios: success, build failure, and preflight failure, including restored
+  build content, process commands, caller environment, and released lock.
+- Initial public smoke runs exposed stale iframe-handshake state and latency
+  during run creation. The host now retains candidate ports until readiness,
+  resends current state, retries through the handshake budget, and measures the
+  activity delay from submission instead of adding it after a slow response.
+- The integrated local suite passed 54 browser tests and the unit/integration/
+  race/privacy suite reached 114 tests. After the final timing adjustment,
+  nine focused browser checks passed across three repetitions of slow iframe
+  initialization, 200 ms completion, and the seeded judge path. The affected
+  hook and handshake suites also passed all 16 cases.
+- The final production build, TypeScript compilation, lint checks, and hosting
+  preflight passed. The client bundle scan found none of the provider-key name
+  or private prompt/provider canaries used by the tests.
+- On the final public build, all three consecutive seeded smoke runs passed.
+  The 23 desktop/mobile surface checks passed, as did the additional slow
+  iframe-initialization and raw-prompt privacy canary checks: 28 public browser
+  checks in total. The hosting preflight also passed after the final restart.
+- `pnpm demo:capture` refreshed the submission images from the public build
+  without console or page errors. Structured desktop/mobile result captures
+  were also refreshed from the passing public browser tests.
+- The existing GitHub repository was verified as public and nonempty, and its
+  real URL now replaces the repository placeholder in submission copy.
+
+The historical local-only notices below describe earlier passes; this rollout
+supersedes them for the deployed application.
+
+## September 9 recovery verification
+
+- Added a branded 404 with working workspace/demo links and verified 404 status,
+  accessibility, and narrow-screen layout.
+- Failed, cancelled, and unavailable runs now receive keyboard focus and offer
+  an explicit return to the unchanged prompt for a new attempt.
+- Creation responses are runtime validated, including same-run transport URLs.
+  Busy and invalid requests get fixed, safe messages; raw response and parsing
+  errors are never projected into the start-failure UI.
+- Start requests have a 15-second timeout, snapshot requests a 10-second timeout.
+  Obsolete requests are aborted and their callbacks ignored. A browser without
+  EventSource can complete normally through snapshots.
+- A snapshot 404/410 ends browser waiting as `unavailable`, without inventing a
+  server cancellation or failure. Transient failures continue to retry.
+- The final isolated production build and full lint passed. All 53 browser
+  tests passed, including eight new desktop/mobile recovery checks. Manual
+  visual inspection covered the mobile 404 and busy-service recovery screen.
+- The hook regression suite now has 13 passing cases, including timeouts,
+  lost runs, malformed transport URLs, unavailable SSE, and reconnection races.
+- Final `pnpm test`: 20 files, 111 tests passed. `pnpm typecheck` also passed.
+- Public production has not been updated by this local verification pass.
+
+## September 9 result experience verification
+
+- `WAITRELAY_TEST_BUILD=1 pnpm build`: isolated production build passed.
+- `NODE_DISABLE_COMPILE_CACHE=1 pnpm lint`: passed with zero warnings.
+- `pnpm typecheck`: passed.
+- `pnpm test`: 20 files, 103 tests passed.
+- `WAITRELAY_TEST_BUILD=1 pnpm test:e2e`: 45 browser tests passed, including
+  six new desktop/mobile result checks for authoritative data, clipboard
+  success and rejection, Sensitive Mode, blocked cosmetic storage, focus
+  recovery, overflow, and completed-state accessibility.
+- The initial result accessibility checks found a prohibited ARIA label on
+  the existing Flight Pack swatches. It was corrected before the final run.
+- Visually inspected the structured result on desktop and mobile. Captures
+  are `demo/structured-result-desktop.png` and
+  `demo/structured-result-mobile.png`. Recreate their source images with
+  `playwright test tests/e2e/result-experience.spec.ts` against an isolated
+  production build; each project's test output includes `structured-result.png`.
+- This is local verification. The public production deployment and older
+  public screenshots have not been replaced by this pass.
+
+## September 8 reliability pass
+
+- Isolated each browser transport lifecycle so delayed creation responses,
+  closed-stream callbacks, and failed choice/cancel requests cannot overwrite a
+  newer run or update the controller after unmount.
+- Reset run identity immediately on a new start and prevent overlapping slow
+  snapshot polls. Transport cleanup now follows unmount rather than each status
+  change, preserving streams opened by an immediately resolved start request.
+- Added five hook-level regression tests covering reverse-order creation,
+  stale creation failures, unmount during creation, closed-stream callbacks,
+  and slow polling across a restart.
+- Limited Vitest to two workers after the unrestricted baseline run timed out
+  in two orchestration tests. The normal `pnpm test` command now passes all
+  103 tests across 20 files on this machine.
+- Added `WAITRELAY_TEST_BUILD=1` for an isolated `.next-test` build while the
+  local production server remains running. See the local hosting guide.
+- Verified the isolated production build, TypeScript, and all 39 Playwright
+  tests, including desktop/mobile accessibility, privacy canaries, completion
+  timing, real browser offline recovery, polling, and SSE reconnection.
+- ESLint passed with zero warnings with `NODE_DISABLE_COMPILE_CACHE=1`.
+  Earlier concurrent lint processes remained stalled; they were stopped after
+  the successful full lint run. No dependency or global cache was modified.
+- These changes are local; the existing public deployment has not been updated
+  by this pass. Historical public-host checks below remain dated August 31.
 
 ## Completed work
+
+- Structured result cards show the authoritative route total, distance, stop
+  order, venue details, and recorded-data notice, with the full provider answer
+  available in an expandable section.
+- Explicit itinerary copying includes the full answer and data notice. Clipboard
+  rejection exposes selectable text with an honest failure message; Sensitive
+  Mode removes copying.
+- Optional cosmetic storage now fails open when browser storage is blocked,
+  and Flight Pack reports whether the preview was saved or kept for the session.
+- Completed-state accessibility coverage now includes the Flight Pack palette,
+  which has a named image role for assistive technology.
 
 - End-to-end Tokyo vertical: submit, start, flight, gate request, option signal, authoritative ACK, trusted preference patch, synthesis lock, structured reranking, completion takeover, result, and computed Impact Receipt.
 - Two causal axes: Less Walking or More Discovery, and Reliable or Surprising.
@@ -23,13 +134,17 @@ Last updated: 2026-08-31
 
 ## Current work
 
-The repository contents are tracked. The competition build is release-gated and published at `https://waitrelay.tangvu.dev` from a single local production process through a named Cloudflare Tunnel. PM2 manages the Next.js server, final origin proxy, and tunnel connector. No video recording, purchase, repository publication, or hackathon submission has been performed.
+The revised application is published at `https://waitrelay.tangvu.dev` from a
+single local production process through a named Cloudflare Tunnel. PM2 manages
+the Next.js server, origin proxy, and tunnel connector. The source release is
+maintained in the public GitHub repository linked in the submission document.
+No video recording, purchase, or hackathon submission has been performed.
 
 ## Next work
 
 1. Record the 80 to 90 second demo using the checked-in script and seeded URL.
-2. Refresh final captures if the visible UI changes before recording.
-3. Replace repository and video placeholders only with real URLs.
+2. Refresh final captures again if the visible UI changes before recording.
+3. Replace the remaining video placeholder only with a real URL.
 4. Submit before the September 17 operational deadline after explicit authorization.
 
 ## Risks and honest limitations

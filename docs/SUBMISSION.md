@@ -121,7 +121,7 @@ See `docs/DEMO_SCRIPT.md` for exact voiceover and preflight steps.
 
 ## Links
 
-- Repository: `[REPOSITORY_URL]`
+- Repository: `https://github.com/tang-vu/waitrelay`
 - Public deployment: `https://waitrelay.tangvu.dev`
 - Demo video: `[VIDEO_URL]`
 - Hackathon page: `https://commonsmade.com/hackathons`

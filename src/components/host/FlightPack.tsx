@@ -20,6 +20,7 @@ const previewOnly: PaymentAvailability = {
 export function FlightPack({ sensitive = false }: { sensitive?: boolean }) {
   const [availability, setAvailability] = useState<PaymentAvailability>(previewOnly);
   const [open, setOpen] = useState(false);
+  const [previewNotice, setPreviewNotice] = useState<string | null>(null);
   const [selected, setSelected] = useState<(typeof previewOptions)[number]["id"]>("moonlit");
   const openButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -68,7 +69,16 @@ export function FlightPack({ sensitive = false }: { sensitive?: boolean }) {
   }, [open]);
 
   const savePreview = () => {
-    if (!sensitive) localStorage.setItem(PACK_KEY, selected);
+    if (sensitive) {
+      setPreviewNotice("Preview selected for this session.");
+    } else {
+      try {
+        localStorage.setItem(PACK_KEY, selected);
+        setPreviewNotice("Cosmetic preview saved on this device.");
+      } catch {
+        setPreviewNotice("Preview selected for this session. Browser storage is unavailable.");
+      }
+    }
     setOpen(false);
   };
 
@@ -78,8 +88,9 @@ export function FlightPack({ sensitive = false }: { sensitive?: boolean }) {
       <h3>Forge a Flight Pack</h3>
       <p>Preview a bird body, trail, and portal style after the answer is ready.</p>
       <span className={`pack-mode pack-mode-${availability.mode}`}>{availability.label}</span>
+      {previewNotice && <p role="status">{previewNotice}</p>}
     </div>
-    <div className="swatches" aria-label="Flight pack palette preview"><span /><span /><span /></div>
+    <div className="swatches" role="img" aria-label="Flight pack palette preview: mint, lilac, and peach"><span /><span /><span /></div>
     <button ref={openButtonRef} type="button" className="secondary-button" onClick={() => setOpen(true)}>
       {availability.mode === "demo" ? "Open sandbox preview" : "Preview Flight Pack"}
     </button>

@@ -50,7 +50,8 @@ The Demo Provider uses local, versioned fixtures and seeded timing. Fixture open
 
 ## Real prototype captures
 
-These captures are generated from the local production build and deterministic fixture path.
+These captures were refreshed from the public production build on September 9
+using the deterministic fixture path.
 
 ![Active Fork Flight gate during the seeded agent run](demo/active-gate-final.png)
 
@@ -59,6 +60,12 @@ These captures are generated from the local production build and deterministic f
 | ![Less Walking relayed with validation pending](demo/pending-ack-final.png) | ![Authoritative Applied now ACK while the next gate opens](demo/applied-ack-final.png) |
 
 ![Completed Tokyo route and computed Impact Receipt](demo/result-receipt-final.png)
+
+The September 9 result view adds structured stop cards, a visible recorded-data
+notice, and explicit copying with a manual fallback. See the updated
+[desktop result](demo/structured-result-desktop.png) and
+[mobile result](demo/structured-result-mobile.png). Both captures were verified
+against the public production build.
 
 ![Expanded Privacy Inspector with actual allowlisted bridge payloads](demo/privacy-inspector-final.png)
 
@@ -123,10 +130,17 @@ pnpm test:race
 pnpm test:privacy
 pnpm test:e2e
 pnpm test:a11y
+pnpm test:ops
 pnpm demo:preflight
 pnpm demo:capture
 pnpm host:preflight
 ```
+
+For this Windows host, `pnpm deploy:local` updates the existing production
+process with a retained previous build and automatic rollback on build/startup
+or hosting-preflight failure. Run the isolated verification first; see
+[Local Hosting](ops/LOCAL_HOSTING.md) for the short-outage behavior and recovery
+tests. It is a deployment command, not a development-server command.
 
 `demo:preflight` runs the deterministic judge path three times. `demo:capture` refreshes the checked-in proof images from the public build, or from `WAITRELAY_CAPTURE_BASE_URL` when set. Install the Playwright browser locally if requested by the toolchain:
 

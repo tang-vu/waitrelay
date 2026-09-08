@@ -1,7 +1,9 @@
 import { chromium } from "@playwright/test";
 
 const baseUrl = (process.env.WAITRELAY_CAPTURE_BASE_URL ?? "https://waitrelay.tangvu.dev").replace(/\/$/, "");
-const browser = await chromium.launch({ headless: true });
+// Software compositing avoids blank headless captures of a live iframe on
+// this Windows host; the application and its timing remain unchanged.
+const browser = await chromium.launch({ headless: true, args: ["--disable-gpu"] });
 const consoleErrors = [];
 
 function watch(page, label) {
@@ -112,7 +114,8 @@ async function terminalProofs() {
   await late.getByRole("heading", { name: "Verifying" }).waitFor({ state: "visible", timeout: 7_000 });
   await choice.dispatchEvent("click");
   await frame.getByText("Too late for this run").waitFor({ state: "visible", timeout: 3_000 });
-  await late.screenshot({ path: "demo/late-choice-final.png" });
+  await late.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  await late.screenshot({ path: "demo/late-choice-final.png", animations: "disabled" });
   await late.close();
 }
 

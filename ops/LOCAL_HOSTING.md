@@ -4,13 +4,13 @@ WaitRelay runs as a production Next.js process on `127.0.0.1:4318`. A local orig
 
 ## Process management
 
-Both processes are declared in `ecosystem.config.cjs`:
+All three processes are declared in `ecosystem.config.cjs`:
 
 - `waitrelay-web`: Next.js production server
 - `waitrelay-proxy`: local streaming proxy and final HTML response policy
 - `waitrelay-tunnel`: Cloudflare Tunnel connector
 
-Start or refresh them with:
+For first-time setup, while no production server is running:
 
 ```powershell
 pnpm install --frozen-lockfile
@@ -18,6 +18,24 @@ pnpm build
 pm2 start ecosystem.config.cjs --update-env
 pm2 save --force
 ```
+
+For subsequent updates, first pass the isolated build and browser checks below,
+then run:
+
+```powershell
+pnpm test:ops
+pnpm deploy:local
+```
+
+The deployment script locks concurrent deployments, stops only `waitrelay-web`,
+retains the previous `.next` under `.release-backups`, builds production, starts
+the server, and runs the local/public hosting preflight. If the build, restart,
+or preflight fails it attempts to restore the previous build. The proxy and
+tunnel keep running. Expect a short outage during the build; existing in-memory
+runs cannot survive the server restart. Backups are retained for manual review
+and are excluded from Git, ESLint, and TypeScript. The deployment tests use
+temporary fake builds and mocked PM2/network commands to verify success and
+rollback after both build and preflight failures.
 
 Inspect them with:
 
@@ -28,6 +46,24 @@ pm2 logs waitrelay-tunnel --lines 100
 ```
 
 The machine-level tunnel credential is intentionally outside the repository at `%USERPROFILE%\.cloudflared\waitrelay-v2.json`. Never commit or copy that file into the project.
+
+## Verify changes while production is running
+
+Use a separate build directory so release checks do not overwrite the `.next`
+artifacts used by `waitrelay-web`:
+
+```powershell
+$env:WAITRELAY_TEST_BUILD="1"
+pnpm build
+if ($LASTEXITCODE -eq 0) { pnpm test:e2e }
+Remove-Item Env:WAITRELAY_TEST_BUILD
+```
+
+This builds into `.next-test` and runs the browser suite against port 3187 with
+the local provider probe on port 3188. Production continues using ports 4317
+and 4318. Next.js regenerates `next-env.d.ts` for the selected build directory;
+a subsequent normal build restores its production type imports. Do not run
+the two builds concurrently in the same checkout.
 
 ## Health checks
 
