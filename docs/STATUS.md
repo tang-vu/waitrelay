@@ -53,7 +53,7 @@ Last updated: 2026-09-09
 - The production dependency audit reported no known vulnerabilities. Local
   diagnostic captures and measurements remain under ignored `artifacts/`.
 - See [Verification and release gates](VERIFICATION.md) for the scope of each
-  check. The remaining latency-adaptation audit is tracked under Next work.
+  check. The subsequent long-wait verification is recorded above.
 
 ## September 9 local demo recording
 
