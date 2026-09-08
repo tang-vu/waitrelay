@@ -2,6 +2,13 @@
 
 Last updated: 2026-09-09
 
+## September 9 local demo recording
+
+- Created the 90-second 1920 x 1080 MP4 with English synthetic narration and captions using `pnpm demo:record`. The source is the actual public build.
+- The continuous main run includes two acknowledged choices and its computed receipt. Comparison, fast completion, and mobile touch footage are labeled as separate scenes.
+- Recording assertions passed without browser console or page errors. The output is H.264/AAC, 5,653,767 bytes; every narration segment fits its allotted scene. Sampled frames were visually reviewed, and full audio/video decoding passed.
+- Local artifacts, transcript, captions, and capture evidence are in `artifacts/demo/`, excluded from Git. Publication and hackathon submission remain pending explicit authorization.
+
 ## September 9 production rollout
 
 - Production was updated through `pnpm deploy:local`; the active build ID is
@@ -138,14 +145,13 @@ The revised application is published at `https://waitrelay.tangvu.dev` from a
 single local production process through a named Cloudflare Tunnel. PM2 manages
 the Next.js server, origin proxy, and tunnel connector. The source release is
 maintained in the public GitHub repository linked in the submission document.
-No video recording, purchase, or hackathon submission has been performed.
+The demo video is recorded locally. No video publication, purchase, or hackathon submission has been performed.
 
 ## Next work
 
-1. Record the 80 to 90 second demo using the checked-in script and seeded URL.
-2. Refresh final captures again if the visible UI changes before recording.
-3. Replace the remaining video placeholder only with a real URL.
-4. Submit before the September 17 operational deadline after explicit authorization.
+1. Review the local video and obtain explicit authorization before publication.
+2. Replace the remaining video placeholder only after a real public video URL exists.
+3. Submit before the September 17 operational deadline after explicit authorization.
 
 ## Risks and honest limitations
 

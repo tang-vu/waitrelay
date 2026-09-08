@@ -12,44 +12,38 @@ Keep the computed comparison ready in a third tab:
 
 `https://waitrelay.tangvu.dev/compare`
 
+## Reproduce the local recording
+
+Run `pnpm demo:record` from the repository root. Prerequisites: dependencies, Playwright Chromium (`pnpm exec playwright install chromium`), FFmpeg and FFprobe on PATH, and Windows PowerShell with the Microsoft Zira Desktop System.Speech voice. The script uses the public build by default; set `WAITRELAY_CAPTURE_BASE_URL` to record a running local build.
+
+Outputs are ignored by Git under `artifacts/demo/`:
+
+- `waitrelay-demo.mp4`: 90 seconds, 1920 x 1080, H.264/AAC, burned-in captions.
+- `waitrelay-demo.srt`: separate caption file.
+- `transcript.md`: English narration transcript, explicitly labeled synthetic.
+- `evidence.json`: recording date, source URL, actual run receipt, scene timing, narration lengths, browser errors, and output metadata.
+- `work/`: original browser recordings and rendering intermediates.
+
+The script asserts two acknowledged choices and a computed receipt in the continuous main run, checks the fast scenario has no iframe, and records a separate touch-enabled mobile run. It rejects browser errors, missed scene deadlines, and overlong narration. All scene changes and mobile footage are labeled. Nothing is uploaded.
+
 ## Voiceover and actions
 
-| Time | Exact voiceover | Exact on-screen action |
+| Time | Exact voiceover | On-screen action |
 | --- | --- | --- |
-| 0 to 8 | "AI waiting screens waste attention. WaitRelay turns that latency into a second input channel." | Start on the title and prompt composer. Hold briefly on the tagline. |
-| 8 to 18 | "I will ask for a rain-safe vegetarian date in Tokyo tonight, under twelve thousand yen, using recorded scenario opening evidence." | Submit the prefilled flagship task. Keep the Demo Provider label and scenario-data notice visible. The agent starts before Fork Flight mounts. |
-| 18 to 34 | "The agent keeps gathering with sensible defaults. It offers one unresolved decision: less walking or more discovery. I fly Less Walking back to the host." | Guide the bird into Less Walking. Pause on Pending. When the authoritative ACK arrives, point to Applied now. |
-| 34 to 46 | "Now I can ask for something more surprising. The game sends only an allowlisted option ID, and the agent never pauses for me." | Select Surprising. Briefly show the continuing public lifecycle and its ACK. |
-| 46 to 56 | "The answer is ready, so completion wins. I do not finish a level or wait for the portal." | Let `run.complete` replace the active flight immediately. Keep any portal motion decorative behind the answer. |
-| 56 to 69 | "The receipt proves what changed. Its weights, route difference, substitutions, and timestamps come from the structured ranking, not an invented explanation." | Expand Impact Receipt. Show only before and after values visible in the current seeded output. |
-| 69 to 77 | "The game never receives the raw prompt. This inspector shows the exact sanitized events that crossed the sandbox." | Expand Privacy Inspector in the completed run. Point to the enum-only Context Capsule, gate identifiers, public stage, and ACK. |
-| 77 to 84 | "The same scenario can finish differently. This comparison computes both plans from their accepted choices." | Switch to the prepared comparison tab. Point to the different routes and the structured reasons beneath them. |
-| 84 to 88 | "And a fast answer never flashes a full-screen game." | Switch to the prepared 200 ms Fault Lab probe and run it. Show the direct answer takeover. |
-| 88 to 90 | "Flight Packs stay an optional post-run preview. The wait is the second half of your prompt." | Cut to a prepared two-second capture of the non-transactional preview and wordmark. |
-
-## Shot list
-
-1. Desktop, 1440 by 900: opening composer and tagline
-2. Prompt submission and immediate lifecycle start
-3. Luminous bird entering the first current
-4. Choice Pending state
-5. Host-confirmed Applied now state
-6. Second decision while work continues
-7. Completion takeover during activity
-8. Compact receipt, then technical receipt details
-9. Actual Privacy Inspector payloads
-10. Computed split-screen comparison
-11. Fast scenario without full-screen mount
-12. Optional Flight Pack preview for no more than two seconds
-13. Final title and tagline
-
-Record a separate mobile 390 by 844 pass for submission cutaways. Show touch selection, 44 pixel targets, and the receipt layout. Do not splice a different seed into a causal before and after sequence.
+| 0-8s | Waiting can improve an AI answer. This is WaitRelay: Fork Flight. | Hold on the actual composer and recorded-data notice. |
+| 8-22s | This recorded Tokyo scenario keeps working while I choose less walking, then something surprising. Only the host's acknowledgement counts. | Submit at 8s. Select Less Walking, wait for Applied now, then select Surprising and wait for Applied now. Allow normal completion; this causal sequence is continuous. |
+| 22-32s | The answer takes over immediately. Stops and costs come from the structured plan. Opening hours are recorded scenario data. | Show the completed result and scroll through the structured stops at 27s. |
+| 32-46s | The Impact Receipt proves what changed. Accepted choices alter ranking weights and routes. The technical view records the signal and acknowledgement. | Show the Impact Receipt; expand the first technical view at 38s. |
+| 46-58s | This inspector shows the exact messages sent to the sandboxed game. The raw prompt and final answer stay outside that boundary. | Expand Privacy Inspector and show the exact payloads; scroll to it at 52s. |
+| 58-70s | The comparison uses the same scenario with different preferences. Both routes and their differences are computed from structured data. | Open the separate computed comparison and scroll to its proof at 64s. |
+| 70-78s | A separate fast scenario goes straight to the answer. Flight Packs are an optional, non-transactional preview. | Open and run the separate fast scenario; open the optional Flight Pack preview at 75s. |
+| 78-90s | On mobile, the same seed works with touch. The choice is optional, and the agent still completes independently. | Cut to the separately recorded 390 x 844 touch run with the same seed. Select Less Walking and let the run finish. |
 
 ## Offline demo path
 
 If external connectivity or credentials are unavailable:
 
-1. Use the primary seeded URL with Demo Provider.
+1. Start the application locally and open `/demo?scenario=standard&seed=fork-flight-001` with Demo Provider.
 2. Confirm the provider badge reads Demo Provider.
 3. State once that availability is versioned scenario data with a recorded timestamp.
 4. Perform Less Walking and Surprising selections.
@@ -101,7 +95,7 @@ Only routes implemented by the final build should be shared publicly. Keep the s
 - Avoid claiming a Commons integration that is not implemented.
 - Avoid implying that public lifecycle stages reveal private reasoning.
 - Keep Dismiss activity and Cancel AI run verbally distinct.
-- Keep the Flight Pack preview to two seconds or remove it before shortening any causal proof.
+- Keep the Flight Pack preview brief; preserve the uninterrupted causal run.
 - Record one clean desktop take and one mobile cutaway take.
 
 Do not publish, upload, or submit the recording without explicit authorization.

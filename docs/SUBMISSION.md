@@ -123,7 +123,7 @@ See `docs/DEMO_SCRIPT.md` for exact voiceover and preflight steps.
 
 - Repository: `https://github.com/tang-vu/waitrelay`
 - Public deployment: `https://waitrelay.tangvu.dev`
-- Demo video: `[VIDEO_URL]`
+- Demo video: `[VIDEO_URL]` (local 90-second recording ready at `artifacts/demo/waitrelay-demo.mp4`; not yet published)
 - Hackathon page: `https://commonsmade.com/hackathons`
 
 Replace the remaining placeholders only with verified public URLs. Do not fabricate links.

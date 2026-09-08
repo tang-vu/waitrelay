@@ -133,6 +133,7 @@ pnpm test:a11y
 pnpm test:ops
 pnpm demo:preflight
 pnpm demo:capture
+pnpm demo:record
 pnpm host:preflight
 ```
 
@@ -173,7 +174,7 @@ The experience supports touch, mouse, arrow keys, WASD, and visible button alter
 
 ## Hackathon evidence
 
-The [Judging Matrix](docs/JUDGING_MATRIX.md) maps concrete product and test evidence to Waiting Experience, Originality, Fit, Repeatability, and Execution. The [Demo Script](docs/DEMO_SCRIPT.md) contains the 90-second recording path, seeded fallback, and preflight checklist. The [Submission](docs/SUBMISSION.md) file contains ready-to-use copy with placeholders only for repository and video URLs.
+The [Judging Matrix](docs/JUDGING_MATRIX.md) maps concrete product and test evidence to Waiting Experience, Originality, Fit, Repeatability, and Execution. The [Demo Script](docs/DEMO_SCRIPT.md) contains the 90-second recording path, seeded fallback, and preflight checklist. The [Submission](docs/SUBMISSION.md) file contains ready-to-use copy with the verified repository URL and one remaining public-video placeholder. The local 90-second narrated recording is `artifacts/demo/waitrelay-demo.mp4`; recording prerequisites and companion files are documented in the Demo Script.
 
 ## Safety
 
