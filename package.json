@@ -6,7 +6,7 @@
   "description": "A playable decision relay that turns AI waiting time into meaningful human input.",
   "packageManager": "pnpm@11.20.0",
   "engines": {
-    "node": ">=20.9.0"
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
   },
   "scripts": {
     "dev": "next dev --port 4317",

@@ -31,12 +31,15 @@ Most waiting screens decorate latency. WaitRelay uses latency as a second input 
 
 ## Run the deterministic demo
 
-Requirements: Node.js 20 or newer and pnpm.
+Use Node.js 24.20.0 (pinned in `.node-version`) and pnpm 11.20.0 (pinned in
+`package.json`). The development toolchain requires a Node version satisfying
+the package's `engines` field; Next.js's lower runtime minimum alone is not
+enough for the current test dependencies.
 
 Public judge build: `https://waitrelay.tangvu.dev/demo?scenario=standard&seed=fork-flight-001`
 
 ```bash
-pnpm install
+pnpm install --frozen-lockfile
 pnpm dev
 ```
 
