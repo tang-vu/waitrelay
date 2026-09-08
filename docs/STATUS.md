@@ -2,6 +2,37 @@
 
 Last updated: 2026-09-09
 
+## September 9 CI and completion-latency verification
+
+- Added automatic GitHub Actions verification on Linux and isolated deployment
+  rollback checks on Windows. Node 24.20.0 is pinned in `.node-version`; the
+  declared Node engine range now matches the installed development dependencies.
+- [The release CI run](https://github.com/tang-vu/waitrelay/actions/runs/34263379948)
+  passed frozen installation, lint, all 114 Vitest tests, production build,
+  TypeScript, all 54 browser tests, three consecutive seeded smoke runs, and
+  all three Windows deployment cases. Browser retries were disabled.
+- The first clean-run audit found a mobile status row that could overflow with
+  the longer live-adapter label. Badges now wrap. Direct checks at 320 and 390
+  pixels with an unavailable-adapter response found no horizontal overflow.
+  Both desktop and mobile accessibility checks pass after the correction.
+- The same audit exposed a test that measured changing gate buttons through
+  separate asynchronous calls. Control dimensions are now captured atomically
+  from one rendered state, retaining the 44-pixel assertions.
+- A public completion measurement exceeded 250 ms. Browser profiling isolated
+  approximately 171 ms of scheduler delay before the result update. Only the
+  authoritative completion event now commits synchronously, and its layout
+  effect focuses and frames the answer before paint. Six focused browser checks
+  passed across three repetitions; three separate local measurements were
+  62.6, 60.7, and 67.7 ms. The public causal-flow timing assertion also passed.
+- Application commit `d473112` was deployed through the verified rollback path.
+  The active production build is `ei0ql_JL8DnNZ8DAnBQxv`; hosting preflight and
+  the four affected public desktop/mobile checks passed after deployment.
+  Three consecutive public seeded smoke runs also passed without console errors.
+- The production dependency audit reported no known vulnerabilities. Local
+  diagnostic captures and measurements remain under ignored `artifacts/`.
+- See [Verification and release gates](VERIFICATION.md) for the scope of each
+  check. The remaining latency-adaptation audit is tracked under Next work.
+
 ## September 9 local demo recording
 
 - Created the 90-second 1920 x 1080 MP4 with English synthetic narration and captions using `pnpm demo:record`. The source is the actual public build.
@@ -11,7 +42,7 @@ Last updated: 2026-09-09
 
 ## September 9 production rollout
 
-- Production was updated through `pnpm deploy:local`; the active build ID is
+- Production was updated through `pnpm deploy:local`; that rollout used build ID
   `sndG0diTg0Zr9vlfIYhSl`. Previous builds remain under `.release-backups`.
 - The rollout now has a deployment lock, bounded health checks, and rollback
   after build/startup/preflight failure. `pnpm test:ops` passed three isolated
