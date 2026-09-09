@@ -2,6 +2,13 @@
 
 Last updated: 2026-09-09
 
+## September 9 MiMo narration revision
+
+- Replaced the local demo narration with Xiaomi MiMo `mimo-v2.5-tts`, voice `Mia`, retaining the original browser footage and captions.
+- `mimo-v2.5-asr` checked all eight segments. One generation added an unrelated question and was rejected and regenerated. One segment received a 1.067x tempo adjustment to fit its scene. Raw ASR receipts and normalization rules are preserved locally.
+- ASR on audio extracted from the final MP4 also recovered the complete script, with a list prefix and punctuation/brand spacing differences. Final output: 90 seconds, 1920 x 1080, H.264/AAC, 6,619,058 bytes; integrated loudness -16.60 LUFS, true peak -1.40 dBTP. Full decode, audio timestamps and audible energy in every segment passed.
+- `ops/replace-demo-narration.mjs` reproduces the offline audio replacement from local WAVs and receipts without using a credential. The key was supplied only to the interactive request process and is absent from repository files. Publication is still pending authorization.
+
 ## September 9 long-wait completion audit
 
 - Long waits now cycle through Aurora Drift, Cloud Passage, and Starfield in

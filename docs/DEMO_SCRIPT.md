@@ -14,6 +14,12 @@ Keep the computed comparison ready in a third tab:
 
 ## Reproduce the local recording
 
+The current reviewed deliverable uses **Xiaomi MiMo `mimo-v2.5-tts`, voice `Mia`**, with `mimo-v2.5-asr` verification. The original Windows narration remains a local fallback in the browser-recording command below.
+
+To rebuild the MiMo audio from existing local assets, run `node ops/replace-demo-narration.mjs artifacts/demo/mimo` after recording. This offline command expects eight `voice-N.wav`, `tts-N.json`, and `asr-N.json` files from the interactive narration session. It verifies the script against ASR, rejects excessive speed adjustment, normalizes clips, preserves the video stream and captions, checks final audio timestamps and audible energy in every scene, and backs up the prior video before replacement. It makes no API calls and needs no key. Generation and ASR were performed interactively through Codex using the supplied Token Plan; no credential is stored in the repository or application.
+
+API schemas: [MiMo speech synthesis](https://mimo.mi.com/docs/en-US/api/audio/tts) and [MiMo speech recognition](https://mimo.mi.com/docs/en-US/api/audio/Speech-Recognition). Raw ASR receipts, including response tags and spelling differences, remain in `artifacts/demo/mimo/`. The comparison normalizes punctuation, acknowledgement/acknowledgment, and WaitRelay/wait relay/weight relay; added spoken content is rejected.
+
 Run `pnpm demo:record` from the repository root. Prerequisites: dependencies, Playwright Chromium (`pnpm exec playwright install chromium`), FFmpeg and FFprobe on PATH, and Windows PowerShell with the Microsoft Zira Desktop System.Speech voice. The script uses the public build by default; set `WAITRELAY_CAPTURE_BASE_URL` to record a running local build.
 
 Outputs are ignored by Git under `artifacts/demo/`:
